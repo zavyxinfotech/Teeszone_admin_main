@@ -26,11 +26,17 @@ export const slugify = (s: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-// Product images are stored as storefront paths ("/products/x.svg") or absolute
-// S3 URLs. The storefront serves the relative ones.
 const STORE_URL = (process.env.NEXT_PUBLIC_STORE_URL ?? "http://localhost:3000").replace(/\/$/, "");
 export const storeUrl = (path = "") => `${STORE_URL}${path}`;
-export const imageUrl = (path: string) => (/^https?:\/\//.test(path) ? path : storeUrl(path));
+const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4010/api").replace(/\/$/, "");
+export const imageUrl = (path: string) => {
+  if (!path) return "";
+  if (path.includes("teeszone-catalogue-images-2026") || path.includes("s3.ap-southeast-2.amazonaws.com")) {
+    const key = path.replace(/^https?:\/\/[^\/]+\//, "");
+    return `${API_URL}/upload/media/${key}`;
+  }
+  return /^https?:\/\//.test(path) ? path : storeUrl(path);
+};
 
 // <input type="datetime-local"> <-> ISO string
 export const isoToLocalInput = (iso: string | null | undefined) => {
