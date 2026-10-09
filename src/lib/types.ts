@@ -21,6 +21,11 @@ export interface ProductColor {
   name: string;
   hex: string;
   image: string;
+  backImage?: string;
+  chestImage?: string;
+  detailImage?: string;
+  image4?: string;
+  image5?: string;
 }
 
 export interface QtyDiscount {

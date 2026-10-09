@@ -38,6 +38,11 @@ const schema = z.object({
         name: z.string().min(1, "Required"),
         hex: z.string().min(1, "Required"),
         image: z.string().min(1, "Required"),
+        backImage: z.string().optional(),
+        chestImage: z.string().optional(),
+        detailImage: z.string().optional(),
+        image4: z.string().optional(),
+        image5: z.string().optional(),
       }),
     )
     .min(1, "Add at least one color"),
@@ -297,16 +302,53 @@ export function ProductForm({ product, initial }: { product?: AdminProduct; init
                       </Button>
                     </div>
                   </div>
-                  <FormRow label="Image" error={errors.colors?.[i]?.image?.message} className="mt-3">
-                    <Controller
-                      control={control}
-                      name={`colors.${i}.image`}
-                      render={({ field }) => <ImageField value={field.value} onChange={field.onChange} />}
-                    />
-                  </FormRow>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <FormRow label="1. Main Front Image (Required)" error={errors.colors?.[i]?.image?.message}>
+                      <Controller
+                        control={control}
+                        name={`colors.${i}.image`}
+                        render={({ field }) => <ImageField value={field.value} onChange={field.onChange} />}
+                      />
+                    </FormRow>
+                    <FormRow label="2. Ref Image 1: Back View (Optional)" error={errors.colors?.[i]?.backImage?.message}>
+                      <Controller
+                        control={control}
+                        name={`colors.${i}.backImage`}
+                        render={({ field }) => <ImageField value={field.value || ""} onChange={field.onChange} />}
+                      />
+                    </FormRow>
+                    <FormRow label="3. Ref Image 2: Chest View (Optional)" error={errors.colors?.[i]?.chestImage?.message}>
+                      <Controller
+                        control={control}
+                        name={`colors.${i}.chestImage`}
+                        render={({ field }) => <ImageField value={field.value || ""} onChange={field.onChange} />}
+                      />
+                    </FormRow>
+                    <FormRow label="4. Ref Image 3: Detail View (Optional)" error={errors.colors?.[i]?.detailImage?.message}>
+                      <Controller
+                        control={control}
+                        name={`colors.${i}.detailImage`}
+                        render={({ field }) => <ImageField value={field.value || ""} onChange={field.onChange} />}
+                      />
+                    </FormRow>
+                    <FormRow label="5. Ref Image 4: Fit / Model View (Optional)" error={errors.colors?.[i]?.image4?.message}>
+                      <Controller
+                        control={control}
+                        name={`colors.${i}.image4`}
+                        render={({ field }) => <ImageField value={field.value || ""} onChange={field.onChange} />}
+                      />
+                    </FormRow>
+                    <FormRow label="6. Ref Image 5: Zoom / Fabric View (Optional)" error={errors.colors?.[i]?.image5?.message}>
+                      <Controller
+                        control={control}
+                        name={`colors.${i}.image5`}
+                        render={({ field }) => <ImageField value={field.value || ""} onChange={field.onChange} />}
+                      />
+                    </FormRow>
+                  </div>
                 </div>
               ))}
-              <Button type="button" variant="outline" onClick={() => colors.append({ name: "", hex: "#222222", image: "" })}>
+              <Button type="button" variant="outline" onClick={() => colors.append({ name: "", hex: "#222222", image: "", backImage: "", chestImage: "", detailImage: "", image4: "", image5: "" })}>
                 <Plus /> Add color
               </Button>
             </CardContent>
