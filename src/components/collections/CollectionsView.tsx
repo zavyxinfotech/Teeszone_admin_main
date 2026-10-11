@@ -23,10 +23,11 @@ import { slugify, storeUrl } from "@/lib/format";
 import type { AdminCollection, CollectionInput } from "@/lib/types";
 
 const SEGMENTS = [
-  { value: "unisex", label: "Unisex" },
   { value: "men", label: "Men" },
   { value: "women", label: "Women" },
   { value: "kids", label: "Kids" },
+  { value: "hoodies", label: "Hoodies" },
+  { value: "specialty", label: "Specialty & Fabrics" },
   { value: "shop-more", label: "Shop More (not in mega menu)" },
 ];
 
@@ -56,7 +57,7 @@ function CollectionDialog({
   const [slugTouched, setSlugTouched] = useState(false);
   const { register, control, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { slug: "", name: "", description: "", segment: "unisex", group: "", sortOrder: 0 },
+    defaultValues: { slug: "", name: "", description: "", segment: "men", group: "", sortOrder: 0 },
   });
 
   useEffect(() => {
@@ -65,7 +66,7 @@ function CollectionDialog({
     reset(
       editing
         ? { slug: editing.slug, name: editing.name, description: editing.description, segment: editing.segment, group: editing.group, sortOrder: editing.sortOrder }
-        : { slug: "", name: "", description: "", segment: "unisex", group: "", sortOrder: 0 },
+        : { slug: "", name: "", description: "", segment: "men", group: "", sortOrder: 0 },
     );
   }, [open, editing, reset]);
 

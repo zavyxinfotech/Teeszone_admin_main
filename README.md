@@ -1,42 +1,64 @@
-# TeesZone Admin
+# TeesZone Admin Dashboard
 
-Back office for the TeesZone storefront: products, collections, promotions, fabrics, reviews,
-enquiries, customers and newsletter subscribers. Talks only to the TeesZone API (`backend/`).
+Administrative back office for the TeesZone storefront: products catalog, collections, promotions, fabrics, customer reviews, inquiries, and customer management. Directly interfaces with the TeesZone Fastify API (`http://localhost:4010`).
 
-- Plan: [`../ADMIN_PLAN.md`](../ADMIN_PLAN.md) · Status: [`../PROGRESS.md`](../PROGRESS.md) (Phase 2.6)
-- Stack: Next.js 16 (App Router) · TypeScript · Tailwind v4 · shadcn/ui (Radix) · TanStack Query + Table ·
-  react-hook-form + zod · sonner · lucide
+- **Framework**: Next.js 16 (App Router)
+- **Language**: TypeScript (Strict Mode)
+- **Styling**: Tailwind CSS & shadcn/ui (Radix Primitives)
+- **State & Tables**: TanStack Query & TanStack Table
+- **Forms & Validation**: react-hook-form + Zod
 
-## Run
+---
 
+## Recent Updates & Improvements
+
+1. **Authentication Credentials**:
+   - Authorized Administrator Login: `teeszoneindia@gmail.com`
+   - Secure dashboard authentication with persistent token storage.
+
+2. **Catalog Synchronization**:
+   - Removed deprecated segments (e.g. `unisex`).
+   - Integrated full segment support: `men`, `women`, `kids`, `hoodies`, and `specialty`.
+   - Collections view aligns 1:1 with live storefront navigation.
+
+3. **Products Table UI Optimization**:
+   - Fixed text overflow and alignment conflicts between the Collections column and Price/Discount column.
+   - Constrained layout badges and tags for clean responsive presentation.
+
+---
+
+## Getting Started
+
+### 1. Install Dependencies
 ```bash
-cp .env.example .env.local        # NEXT_PUBLIC_API_URL, NEXT_PUBLIC_STORE_URL
-cd ../backend && npm run dev      # API on :4010 (MySQL + Redis must be up)
-npm run dev                       # http://localhost:3001
+npm install
 ```
 
-Sign in with an account whose email is listed in `ADMIN_EMAILS` (`backend/.env`) — the same
-email/password used on the storefront. Non-admin accounts are rejected.
-
-## Scripts
-
-- `npm run dev` — dev server on :3001 (`next dev -p 3001` is set in package.json)
-- `npm run build` — production build (backend must be reachable)
-- `npm run lint`
-
-## Layout
-
-```
-src/app/login                 sign-in
-src/app/(dashboard)/…         auth-guarded routes, one folder per module
-src/components/ui             shadcn primitives (generated)
-src/components/data-table     DataTable (TanStack), ServerPagination, RowActions
-src/components/shared         FormRow, TagInput, MultiSelect, ImageField, ConfirmDialog, …
-src/components/<module>       tables, forms, dialogs per module
-src/hooks                     TanStack Query hooks per domain
-src/lib/api.ts                envelope-unwrapping API client (Bearer JWT)
-src/lib/types.ts              API contract (copied from ui/src/lib/types.ts) + admin extras
+### 2. Environment Variables
+Create `.env.local`:
+```env
+NEXT_PUBLIC_API_URL=http://localhost:4010
+NEXT_PUBLIC_STORE_URL=http://localhost:3000
 ```
 
-Product image uploads go to `POST /api/upload/image`, which answers 503 until S3 credentials are
-configured in `backend/.env`; image paths stay editable as text meanwhile.
+### 3. Run Development Server
+```bash
+npm run dev
+```
+Open [http://localhost:3001](http://localhost:3001) in your browser.
+
+---
+
+## Admin Credentials
+
+- **Email**: `teeszoneindia@gmail.com`
+- **Password**: `teeszone@2025`
+
+---
+
+## Available Scripts
+
+- `npm run dev` — Starts admin development server on port 3001
+- `npm run build` — Builds the application for production
+- `npm run start` — Runs the production build
+- `npm run lint` — Runs ESLint checks

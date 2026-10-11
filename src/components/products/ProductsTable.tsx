@@ -89,12 +89,20 @@ export function ProductsTable() {
         cell: ({ row }) => {
           const real = row.original.collections.filter((c) => !isVirtualCollection(c));
           return (
-            <div className="flex max-w-56 flex-wrap gap-1">
-              {real.slice(0, 3).map((c) => (
-                <Badge key={c} variant="outline" className="font-normal">
-                  {collectionName.get(c) ?? c}
-                </Badge>
-              ))}
+            <div className="flex min-w-[200px] max-w-[280px] flex-wrap gap-1 pr-4">
+              {real.slice(0, 3).map((c) => {
+                const name = collectionName.get(c) ?? c;
+                return (
+                  <Badge
+                    key={c}
+                    variant="outline"
+                    className="font-normal max-w-full min-w-0 shrink"
+                    title={name}
+                  >
+                    <span className="truncate">{name}</span>
+                  </Badge>
+                );
+              })}
               {real.length > 3 && <span className="text-xs text-muted-foreground">+{real.length - 3}</span>}
             </div>
           );
@@ -106,7 +114,7 @@ export function ProductsTable() {
         cell: ({ row }) => {
           const p = row.original;
           return (
-            <div className="whitespace-nowrap">
+            <div className="whitespace-nowrap min-w-[130px] pl-2">
               <span className="font-semibold">{formatINR(p.price)}</span>
               <span className="ml-1.5 text-xs text-muted-foreground line-through">{formatINR(p.mrp)}</span>
               <span className="ml-1.5 text-xs font-medium text-primary">{offPct(p.mrp, p.price)}% off</span>

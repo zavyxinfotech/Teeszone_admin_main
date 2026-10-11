@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new ApiError(
         "This account isn't an admin.",
         403,
-        "Ask Madhan to add your email to ADMIN_EMAILS, then sign in again.",
+        "Ask the administrator to add your email to ADMIN_EMAILS, then sign in again.",
       );
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ token: session.token }));
