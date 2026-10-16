@@ -339,3 +339,15 @@ export interface HomeContent {
   fabricLibrary: FabricLibraryContent;
   processSteps: ProcessStepsContent;
 }
+
+export interface UserProductLike {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  userPhone: string;
+  userCompany: string;
+  productSlug: string;
+  productName: string;
+  createdAt: string;
+}

@@ -9,6 +9,7 @@ import {
   Package,
   Shirt,
   Users,
+  Heart,
 } from "lucide-react";
 
 export interface NavItem {
@@ -43,6 +44,7 @@ export const NAV: NavGroup[] = [
   {
     title: "People",
     items: [
+      { href: "/likes", label: "Product Likes", icon: Heart },
       { href: "/enquiries", label: "Enquiries", icon: Inbox },
       { href: "/customers", label: "Customers", icon: Users },
       { href: "/newsletter", label: "Newsletter", icon: Mail },

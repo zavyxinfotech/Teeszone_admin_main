@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { collectionsApi, fabricsApi, homeContentApi, productsApi, reviewsApi } from "@/lib/api";
+import { collectionsApi, fabricsApi, homeContentApi, likesApi, productsApi, reviewsApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import type { CollectionInput, FabricInput, HomeContent, ProductInput, ReviewInput } from "@/lib/types";
 import { useApiMutation } from "./use-api-mutation";
@@ -14,6 +14,7 @@ export const keys = {
   fabrics: ["fabrics"] as const,
   reviews: ["reviews"] as const,
   homeContent: ["home-content"] as const,
+  likes: ["likes"] as const,
   promotions: ["promotions"] as const,
   promotion: (id: string) => ["promotions", id] as const,
   enquiries: ["enquiries"] as const,
@@ -127,3 +128,9 @@ export const useUpdateHomeContent = (onSuccess?: () => void) =>
     invalidate: [keys.homeContent],
     onSuccess: () => onSuccess?.(),
   });
+
+// ---------- Product Likes ----------
+export function useLikes() {
+  const enabled = useEnabled();
+  return useQuery({ queryKey: keys.likes, queryFn: likesApi.adminList, enabled });
+}

@@ -25,6 +25,7 @@ import type {
   ReviewInput,
   Segment,
   Subscriber,
+  UserProductLike,
 } from "@/lib/types";
 
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4010/api").replace(/\/$/, "");
@@ -153,6 +154,10 @@ export const homeContentApi = {
   get: () => request<HomeContent>("/home-content"),
   update: (input: HomeContent) =>
     requestFull<HomeContent>("/home-content", { method: "PUT", body: input }),
+};
+
+export const likesApi = {
+  adminList: () => request<UserProductLike[]>("/likes/admin/list"),
 };
 
 // ---------- Leads & people ----------
