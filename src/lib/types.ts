@@ -51,6 +51,7 @@ export interface Product {
   isNew?: boolean;
   bestSeller?: boolean;
   megaSale?: boolean;
+  ordersDelivered?: number;
 }
 
 export interface Review {
@@ -58,6 +59,9 @@ export interface Review {
   quote: string;
   author: string;
   product: string;
+  image?: string;
+  customerImage?: string;
+  verified?: boolean;
 }
 
 export interface Fabric {
@@ -139,6 +143,7 @@ export interface ProductInput {
   megaSale: boolean;
   isActive: boolean;
   sortOrder: number;
+  ordersDelivered?: number;
 }
 
 export interface AdminCollection extends Collection {
@@ -208,6 +213,9 @@ export interface ReviewInput {
   quote: string;
   author: string;
   product: string;
+  image?: string;
+  customerImage?: string;
+  verified?: boolean;
   isPublished: boolean;
   sortOrder: number;
 }
@@ -232,6 +240,7 @@ export interface Customer {
   email: string;
   name: string;
   phone: string;
+  company?: string;
   role: "CUSTOMER" | "ADMIN";
   hasPassword: boolean;
   googleLinked: boolean;

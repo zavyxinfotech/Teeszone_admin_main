@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, ImageIcon, Plus, Star, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -19,6 +19,17 @@ import { TagInput } from "@/components/shared/TagInput";
 import { useCollections, useCreateProduct, useFabrics, useUpdateProduct } from "@/hooks/use-catalog";
 import { formatINR, offPct, slugify } from "@/lib/format";
 import { isVirtualCollection, type AdminProduct, type ProductInput } from "@/lib/types";
+
+type ColorSlotKey = "backImage" | "chestImage" | "detailImage" | "image4" | "image5";
+
+const IMAGE_SLOTS = [
+  { key: "image", label: "1. Main Front Image", shortLabel: "1. Front", desc: "Default product cover image", required: true },
+  { key: "backImage", label: "2. Ref Image 1: Back View", shortLabel: "2. Back", desc: "Back angle perspective" },
+  { key: "chestImage", label: "3. Ref Image 2: Chest View", shortLabel: "3. Chest", desc: "Close-up chest / logo print view" },
+  { key: "detailImage", label: "4. Ref Image 3: Detail View", shortLabel: "4. Detail", desc: "Stitching / collar / hem details" },
+  { key: "image4", label: "5. Ref Image 4: Fit / Model View", shortLabel: "5. Model", desc: "Model lifestyle / body fit view" },
+  { key: "image5", label: "6. Ref Image 5: Zoom / Fabric View", shortLabel: "6. Fabric", desc: "High-res fabric texture / zoom" },
+] as const;
 
 // Mirrors backend products.schema.ts upsertBody 1:1.
 const schema = z.object({
@@ -58,6 +69,7 @@ const schema = z.object({
   megaSale: z.boolean(),
   isActive: z.boolean(),
   sortOrder: z.number({ invalid_type_error: "Required" }).int(),
+  ordersDelivered: z.number({ invalid_type_error: "Must be a number" }).int().nonnegative().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -87,6 +99,7 @@ const defaults: FormValues = {
   megaSale: false,
   isActive: true,
   sortOrder: 0,
+  ordersDelivered: 850,
 };
 
 export const productToValues = (p: AdminProduct, duplicate = false): FormValues => ({
@@ -108,6 +121,7 @@ export const productToValues = (p: AdminProduct, duplicate = false): FormValues 
   megaSale: !!p.megaSale,
   isActive: p.isActive,
   sortOrder: p.sortOrder,
+  ordersDelivered: p.ordersDelivered != null ? p.ordersDelivered : 850,
 });
 
 export function ProductForm({ product, initial }: { product?: AdminProduct; initial?: FormValues }) {
@@ -141,6 +155,16 @@ export function ProductForm({ product, initial }: { product?: AdminProduct; init
         .map((c) => ({ value: c.slug, label: c.name, group: `${c.segment} › ${c.group}` })),
     [collections],
   );
+
+  const makeSlotMain = (colorIndex: number, targetKey: ColorSlotKey) => {
+    const currentMain = watch(`colors.${colorIndex}.image`);
+    const newMain = watch(`colors.${colorIndex}.${targetKey}`);
+    if (!newMain) return;
+
+    // Swap target with Slot 1 ('image')
+    setValue(`colors.${colorIndex}.image`, newMain, { shouldDirty: true, shouldValidate: true });
+    setValue(`colors.${colorIndex}.${targetKey}`, currentMain || "", { shouldDirty: true, shouldValidate: true });
+  };
 
   const busy = create.isPending || update.isPending;
   const onSubmit = (values: FormValues) => {
@@ -267,87 +291,213 @@ export function ProductForm({ product, initial }: { product?: AdminProduct; init
 
           <Card>
             <CardHeader>
-              <CardTitle>Colors & images</CardTitle>
-              <CardDescription>The first color&apos;s image is the product&apos;s cover. Image paths are storefront paths or S3 URLs.</CardDescription>
+              <CardTitle>Colors &amp; images</CardTitle>
+              <CardDescription>
+                Align and organize product images below. The first color and Slot #1 are the default cover shown across the storefront and product cards.
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-5">
               {typeof errors.colors?.message === "string" && <p className="text-xs text-destructive">{errors.colors.message}</p>}
-              {colors.fields.map((f, i) => (
-                <div key={f.id} className="rounded-lg border border-border p-3">
-                  <div className="grid gap-3 sm:grid-cols-[1fr_140px_auto]">
-                    <FormRow label="Color name" error={errors.colors?.[i]?.name?.message}>
-                      <Input placeholder="Black" {...register(`colors.${i}.name`)} />
-                    </FormRow>
-                    <FormRow label="Hex" error={errors.colors?.[i]?.hex?.message}>
-                      <Controller
-                        control={control}
-                        name={`colors.${i}.hex`}
-                        render={({ field }) => (
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="color"
-                              value={/^#[0-9a-fA-F]{6}$/.test(field.value) ? field.value : "#000000"}
-                              onChange={(e) => field.onChange(e.target.value)}
-                              className="size-8 cursor-pointer rounded border border-border bg-transparent p-0"
-                              aria-label="Pick color"
-                            />
-                            <Input value={field.value} onChange={field.onChange} className="font-mono" />
-                          </div>
+              {colors.fields.map((f, i) => {
+                const isPrimaryColor = i === 0;
+
+                return (
+                  <div key={f.id} className="rounded-lg border border-border p-4 bg-card space-y-4">
+                    {/* Color variant header with Primary toggle */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-border">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-foreground">Color Variant #{i + 1}</span>
+                        {isPrimaryColor ? (
+                          <span className="inline-flex items-center gap-1 rounded bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                            <Star className="size-3 fill-amber-500 text-amber-500" /> Primary Cover Color (Catalog Default)
+                          </span>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="xs"
+                            className="gap-1 text-xs text-primary hover:bg-primary hover:text-white"
+                            onClick={() => colors.move(i, 0)}
+                            title="Set this as the default display color on catalog cards"
+                          >
+                            <Star className="size-3" /> Set as Primary Color
+                          </Button>
                         )}
-                      />
-                    </FormRow>
-                    <div className="flex items-end">
-                      <Button type="button" variant="ghost" size="icon" aria-label="Remove color" disabled={colors.fields.length === 1} onClick={() => colors.remove(i)}>
-                        <Trash2 />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-xs"
+                        aria-label="Remove color"
+                        disabled={colors.fields.length === 1}
+                        onClick={() => colors.remove(i)}
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        <Trash2 className="size-4" />
                       </Button>
                     </div>
+
+                    <div className="grid gap-3 sm:grid-cols-[1fr_160px]">
+                      <FormRow label="Color name" error={errors.colors?.[i]?.name?.message}>
+                        <Input placeholder="Black" {...register(`colors.${i}.name`)} />
+                      </FormRow>
+                      <FormRow label="Hex code" error={errors.colors?.[i]?.hex?.message}>
+                        <Controller
+                          control={control}
+                          name={`colors.${i}.hex`}
+                          render={({ field }) => (
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="color"
+                                value={/^#[0-9a-fA-F]{6}$/.test(field.value) ? field.value : "#000000"}
+                                onChange={(e) => field.onChange(e.target.value)}
+                                className="size-8 cursor-pointer rounded border border-border bg-transparent p-0"
+                                aria-label="Pick color"
+                              />
+                              <Input value={field.value} onChange={field.onChange} className="font-mono text-xs" />
+                            </div>
+                          )}
+                        />
+                      </FormRow>
+                    </div>
+
+                    {/* Visual Image Alignment Bar */}
+                    <div className="rounded-lg border border-border bg-muted/40 p-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                          <Star className="size-3.5 fill-amber-500 text-amber-500" />
+                          Image Alignment &amp; Main Cover Selector
+                        </p>
+                        <span className="text-[11px] text-muted-foreground">
+                          Slot #1 is the active cover image shown on catalog &amp; cards
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                        {IMAGE_SLOTS.map((slot, sIdx) => {
+                          const val = watch(`colors.${i}.${slot.key}` as any) || "";
+                          const isMain = slot.key === "image";
+                          return (
+                            <div
+                              key={slot.key}
+                              className={`relative flex flex-col items-center rounded-md border p-1.5 text-center transition-all ${
+                                isMain
+                                  ? "border-amber-500 bg-amber-500/10 ring-1 ring-amber-500"
+                                  : val
+                                  ? "border-border bg-background hover:border-primary/50"
+                                  : "border-dashed border-border/60 bg-muted/20 opacity-60"
+                              }`}
+                            >
+                              <div className="mb-1 w-full flex items-center justify-between px-0.5">
+                                <span className="text-[10px] font-bold text-muted-foreground">#{sIdx + 1}</span>
+                                {isMain ? (
+                                  <span className="inline-flex items-center gap-0.5 rounded bg-amber-500 px-1 py-0.2 text-[9px] font-bold uppercase text-white shadow-xs">
+                                    ★ MAIN
+                                  </span>
+                                ) : val ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => makeSlotMain(i, slot.key as ColorSlotKey)}
+                                    className="text-[10px] font-semibold text-primary hover:underline"
+                                    title="Make this the Main Image"
+                                  >
+                                    Set Main
+                                  </button>
+                                ) : (
+                                  <span className="text-[9px] text-muted-foreground">Empty</span>
+                                )}
+                              </div>
+
+                              <div className="relative size-12 overflow-hidden rounded bg-muted flex items-center justify-center border border-border/50">
+                                {val ? (
+                                  <img
+                                    src={val}
+                                    alt=""
+                                    className="size-full object-cover"
+                                    onError={(e) => {
+                                      (e.target as HTMLElement).style.display = "none";
+                                    }}
+                                  />
+                                ) : (
+                                  <ImageIcon className="size-4 text-muted-foreground/40" />
+                                )}
+                              </div>
+
+                              <span className="mt-1 text-[10px] font-medium text-muted-foreground truncate max-w-full">
+                                {slot.shortLabel}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Detailed 6 Image Upload / URL Fields */}
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {/* Slot 1: Main */}
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-semibold text-foreground">
+                            1. Main Front Image (Required)
+                          </label>
+                          <span className="inline-flex items-center gap-1 rounded bg-amber-500/15 border border-amber-500/30 px-1.5 py-0.5 text-[10px] font-bold uppercase text-amber-700 dark:text-amber-400">
+                            <Star className="size-2.5 fill-current" /> Storefront Cover
+                          </span>
+                        </div>
+                        <Controller
+                          control={control}
+                          name={`colors.${i}.image`}
+                          render={({ field }) => <ImageField value={field.value} onChange={field.onChange} />}
+                        />
+                        {errors.colors?.[i]?.image?.message && (
+                          <p className="text-xs text-destructive">{errors.colors[i].image.message}</p>
+                        )}
+                      </div>
+
+                      {/* Slots 2 to 6: Reference Views with "Set as Main" Button */}
+                      {(
+                        [
+                          { key: "backImage", label: "2. Ref Image 1: Back View (Optional)" },
+                          { key: "chestImage", label: "3. Ref Image 2: Chest View (Optional)" },
+                          { key: "detailImage", label: "4. Ref Image 3: Detail View (Optional)" },
+                          { key: "image4", label: "5. Ref Image 4: Fit / Model View (Optional)" },
+                          { key: "image5", label: "6. Ref Image 5: Zoom / Fabric View (Optional)" },
+                        ] as const
+                      ).map((slot) => {
+                        const hasVal = Boolean(watch(`colors.${i}.${slot.key}`));
+                        return (
+                          <div key={slot.key} className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <label className="text-xs font-medium text-muted-foreground truncate">
+                                {slot.label}
+                              </label>
+                              {hasVal && (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="xs"
+                                  className="h-5 gap-1 px-1.5 text-[10px] font-semibold text-primary border-primary/30 hover:bg-primary hover:text-white transition-colors"
+                                  onClick={() => makeSlotMain(i, slot.key)}
+                                  title="Promote this image to Slot 1 (Main Cover)"
+                                >
+                                  <Star className="size-2.5 fill-current" /> Set as Main
+                                </Button>
+                              )}
+                            </div>
+                            <Controller
+                              control={control}
+                              name={`colors.${i}.${slot.key}`}
+                              render={({ field }) => (
+                                <ImageField value={field.value || ""} onChange={field.onChange} />
+                              )}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                    <FormRow label="1. Main Front Image (Required)" error={errors.colors?.[i]?.image?.message}>
-                      <Controller
-                        control={control}
-                        name={`colors.${i}.image`}
-                        render={({ field }) => <ImageField value={field.value} onChange={field.onChange} />}
-                      />
-                    </FormRow>
-                    <FormRow label="2. Ref Image 1: Back View (Optional)" error={errors.colors?.[i]?.backImage?.message}>
-                      <Controller
-                        control={control}
-                        name={`colors.${i}.backImage`}
-                        render={({ field }) => <ImageField value={field.value || ""} onChange={field.onChange} />}
-                      />
-                    </FormRow>
-                    <FormRow label="3. Ref Image 2: Chest View (Optional)" error={errors.colors?.[i]?.chestImage?.message}>
-                      <Controller
-                        control={control}
-                        name={`colors.${i}.chestImage`}
-                        render={({ field }) => <ImageField value={field.value || ""} onChange={field.onChange} />}
-                      />
-                    </FormRow>
-                    <FormRow label="4. Ref Image 3: Detail View (Optional)" error={errors.colors?.[i]?.detailImage?.message}>
-                      <Controller
-                        control={control}
-                        name={`colors.${i}.detailImage`}
-                        render={({ field }) => <ImageField value={field.value || ""} onChange={field.onChange} />}
-                      />
-                    </FormRow>
-                    <FormRow label="5. Ref Image 4: Fit / Model View (Optional)" error={errors.colors?.[i]?.image4?.message}>
-                      <Controller
-                        control={control}
-                        name={`colors.${i}.image4`}
-                        render={({ field }) => <ImageField value={field.value || ""} onChange={field.onChange} />}
-                      />
-                    </FormRow>
-                    <FormRow label="6. Ref Image 5: Zoom / Fabric View (Optional)" error={errors.colors?.[i]?.image5?.message}>
-                      <Controller
-                        control={control}
-                        name={`colors.${i}.image5`}
-                        render={({ field }) => <ImageField value={field.value || ""} onChange={field.onChange} />}
-                      />
-                    </FormRow>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               <Button type="button" variant="outline" onClick={() => colors.append({ name: "", hex: "#222222", image: "", backImage: "", chestImage: "", detailImage: "", image4: "", image5: "" })}>
                 <Plus /> Add color
               </Button>
@@ -392,6 +542,31 @@ export function ProductForm({ product, initial }: { product?: AdminProduct; init
               />
               <FormRow label="Position" htmlFor="sortOrder" error={errors.sortOrder?.message} hint="Lower numbers appear first">
                 <Input id="sortOrder" type="number" {...register("sortOrder", { valueAsNumber: true })} />
+              </FormRow>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Orders &amp; Social Proof</CardTitle>
+              <CardDescription>
+                Orders delivered metric shown on the storefront product details page.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <FormRow
+                label="Orders Delivered Count"
+                htmlFor="ordersDelivered"
+                error={errors.ordersDelivered?.message}
+                hint="Displayed as '{count}+ orders delivered' on product details"
+              >
+                <Input
+                  id="ordersDelivered"
+                  type="number"
+                  min="0"
+                  placeholder="e.g. 850"
+                  {...register("ordersDelivered", { valueAsNumber: true })}
+                />
               </FormRow>
             </CardContent>
           </Card>

@@ -115,3 +115,16 @@
     cursor: pointer;
   }
 }
+
+/* Hide Next.js Dev Indicator Badge ("N" button) */
+nextjs-portal,
+[data-nextjs-dev-indicator],
+[data-nextjs-toast],
+[data-nextjs-route-announcer],
+div[data-next-badge],
+button[aria-label*="Next.js"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

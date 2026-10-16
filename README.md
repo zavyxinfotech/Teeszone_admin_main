@@ -51,8 +51,11 @@ Open [http://localhost:3001](http://localhost:3001) in your browser.
 
 ## Admin Credentials
 
-- **Email**: `teeszoneindia@gmail.com`
-- **Password**: `teeszone@2025`
+1. **Email**: `teeszoneindia@gmail.com` | **Password**: `teeszone@2025`
+2. **Email**: `vijayadarshini@teeszone.in` | **Password**: `tees@2026`
+3. **Email**: `archana@teeszone.in` | **Password**: `tees@2026`
+4. **Email**: `nithyasri@teeszone.in` | **Password**: `tees@2026`
+5. **Email**: `vasuki@zavyx.in` | **Password**: `tees@2026`
 
 ---
 

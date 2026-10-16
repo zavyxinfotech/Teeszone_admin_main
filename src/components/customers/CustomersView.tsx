@@ -53,6 +53,7 @@ function CustomerSheet({ id, onClose }: { id: string | null; onClose: () => void
               <dl className="grid grid-cols-[100px_1fr] gap-y-2 text-sm">
                 <dt className="text-muted-foreground">Email</dt><dd className="break-all">{data.email || "—"}</dd>
                 <dt className="text-muted-foreground">Phone</dt><dd>{data.phone || "—"}</dd>
+                <dt className="text-muted-foreground">Company</dt><dd>{data.company || "—"}</dd>
                 <dt className="text-muted-foreground">Role</dt><dd><Badge variant={data.role === "ADMIN" ? "default" : "outline"}>{data.role}</Badge></dd>
                 <dt className="text-muted-foreground">Sign-in</dt><dd><SignInMethods c={data} /></dd>
               </dl>
@@ -138,6 +139,9 @@ export function CustomersView() {
                     <TableCell>
                       <p className="font-medium">{c.name || "—"}</p>
                       <p className="text-xs text-muted-foreground">{c.email}</p>
+                      {c.company && (
+                        <p className="mt-0.5 text-xs font-medium text-primary">🏢 {c.company}</p>
+                      )}
                     </TableCell>
                     <TableCell>{c.phone || "—"}</TableCell>
                     <TableCell><SignInMethods c={c} /></TableCell>

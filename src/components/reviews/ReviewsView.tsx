@@ -16,6 +16,7 @@ import { RowActions } from "@/components/data-table/RowActions";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { FormRow } from "@/components/shared/FormRow";
+import { ImageField } from "@/components/shared/ImageField";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useCreateReview, useDeleteReview, useReviews, useUpdateReview } from "@/hooks/use-catalog";
 import { cn } from "@/lib/utils";
@@ -26,13 +27,24 @@ const schema = z.object({
   quote: z.string().min(1, "Required"),
   author: z.string().min(1, "Required"),
   product: z.string().min(1, "Required"),
+  image: z.string().optional(),
+  verified: z.boolean().optional(),
   isPublished: z.boolean(),
   sortOrder: z.number({ invalid_type_error: "Required" }).int(),
 });
 type FormValues = z.infer<typeof schema>;
-const empty: FormValues = { stars: 5, quote: "", author: "", product: "", isPublished: false, sortOrder: 0 };
+const empty: FormValues = { stars: 5, quote: "", author: "", product: "", image: "", verified: true, isPublished: false, sortOrder: 0 };
 
-const toInput = (r: AdminReview): ReviewInput => ({ stars: r.stars, quote: r.quote, author: r.author, product: r.product, isPublished: r.isPublished, sortOrder: r.sortOrder });
+const toInput = (r: AdminReview): ReviewInput => ({
+  stars: r.stars,
+  quote: r.quote,
+  author: r.author,
+  product: r.product,
+  image: r.image || r.customerImage || "",
+  verified: r.verified ?? true,
+  isPublished: r.isPublished,
+  sortOrder: r.sortOrder,
+});
 const looksSample = (r: AdminReview) => /sample|placeholder|lorem/i.test(`${r.author} ${r.quote}`);
 
 function Stars({ value, onChange }: { value: number; onChange?: (n: number) => void }) {
@@ -83,11 +95,34 @@ function ReviewDialog({ open, onOpenChange, editing }: { open: boolean; onOpenCh
             <FormRow label="Product / order" htmlFor="r-product" required error={errors.product?.message}>
               <Input id="r-product" {...register("product")} placeholder="Corporate polos, 200 pcs" />
             </FormRow>
+            <FormRow label="Review Photo (S3)" hint="Customer apparel photo (stored in Amazon S3)" className="sm:col-span-2">
+              <Controller
+                control={control}
+                name="image"
+                render={({ field }) => (
+                  <ImageField
+                    value={field.value || ""}
+                    onChange={field.onChange}
+                    placeholder="https://teeszone-catalogue-images-2026.s3.ap-southeast-2.amazonaws.com/... or /reviews/..."
+                  />
+                )}
+              />
+            </FormRow>
+            <Controller
+              control={control}
+              name="verified"
+              render={({ field }) => (
+                <label className="flex items-center justify-between gap-3 text-sm">
+                  <span className="font-medium">Verified Customer</span>
+                  <Switch checked={field.value ?? true} onCheckedChange={field.onChange} />
+                </label>
+              )}
+            />
             <Controller
               control={control}
               name="isPublished"
               render={({ field }) => (
-                <label className="flex items-center justify-between gap-3 text-sm sm:col-span-2">
+                <label className="flex items-center justify-between gap-3 text-sm">
                   <span className="font-medium">Published</span>
                   <Switch checked={field.value} onCheckedChange={field.onChange} />
                 </label>
@@ -116,6 +151,18 @@ export function ReviewsView() {
   const columns = useMemo<ColumnDef<AdminReview, unknown>[]>(
     () => [
       {
+        id: "photo",
+        header: "Photo",
+        cell: ({ row }) => {
+          const img = row.original.image || row.original.customerImage;
+          return img ? (
+            <img src={img} alt="" className="size-10 rounded-md object-cover border border-border" />
+          ) : (
+            <span className="text-xs text-muted-foreground">—</span>
+          );
+        },
+      },
+      {
         id: "quote",
         accessorFn: (r) => `${r.quote} ${r.author} ${r.product}`,
         header: "Review",
@@ -124,12 +171,25 @@ export function ReviewsView() {
             <p className="line-clamp-2 text-sm">“{row.original.quote}”</p>
             <p className="mt-0.5 text-xs text-muted-foreground">
               {row.original.author} · {row.original.product}
+              {row.original.verified && <span className="ml-2 font-semibold text-emerald-600">✓ Verified</span>}
               {looksSample(row.original) && <span className="ml-2 font-semibold text-amber-700">SAMPLE</span>}
             </p>
           </div>
         ),
       },
-      { accessorKey: "stars", header: "Rating", cell: ({ getValue }) => <Stars value={getValue<number>()} /> },
+      {
+        accessorKey: "stars",
+        header: "Rating",
+        cell: ({ getValue }) => {
+          const val = getValue<number>();
+          return (
+            <div className="flex items-center gap-1.5">
+              <Stars value={val} />
+              <span className="text-xs font-bold text-foreground">{val}.0</span>
+            </div>
+          );
+        },
+      },
       {
         accessorKey: "isPublished",
         header: "Published",
