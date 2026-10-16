@@ -18,6 +18,7 @@ import type {
   Enquiry,
   EnquiryStatus,
   FabricInput,
+  HomeContent,
   Paginated,
   ProductInput,
   PromotionInput,
@@ -146,6 +147,12 @@ export const reviewsApi = {
   update: (id: string, input: ReviewInput) =>
     requestFull<AdminReview>(`/reviews/${id}`, { method: "PUT", body: input }),
   remove: (id: string) => requestFull<{ deleted: boolean }>(`/reviews/${id}`, { method: "DELETE" }),
+};
+
+export const homeContentApi = {
+  get: () => request<HomeContent>("/home-content"),
+  update: (input: HomeContent) =>
+    requestFull<HomeContent>("/home-content", { method: "PUT", body: input }),
 };
 
 // ---------- Leads & people ----------

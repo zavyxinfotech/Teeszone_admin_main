@@ -274,3 +274,68 @@ export interface DashboardStats {
   recentEnquiries: Enquiry[];
   recentCustomers: { id: string; name: string; email: string; createdAt: string }[];
 }
+
+export interface HeroStat {
+  end: number;
+  suffix: string;
+  label: string;
+}
+
+export interface HeroContent {
+  badge: string;
+  title: string;
+  description: string;
+  heroImage: string;
+  bgImageDesktop: string;
+  bgImageMobile: string;
+  primaryBtnText: string;
+  primaryBtnLink: string;
+  secondaryBtnText: string;
+  secondaryBtnLink: string;
+  stats: HeroStat[];
+}
+
+export interface ShopByRangeTile {
+  title: string;
+  href: string;
+  image: string;
+  buttonText: string;
+  sale: boolean;
+}
+
+export interface ShopByRangeFeature {
+  title: string;
+  text: string;
+  href: string;
+  buttonText: string;
+  image: string;
+}
+
+export interface ShopByRangeContent {
+  title: string;
+  feature: ShopByRangeFeature;
+  tiles: ShopByRangeTile[];
+}
+
+export interface FabricLibraryContent {
+  title: string;
+  subtitle: string;
+}
+
+export interface ProcessStep {
+  title: string;
+  text: string;
+}
+
+export interface ProcessStepsContent {
+  title: string;
+  subtitle: string;
+  steps: ProcessStep[];
+}
+
+export interface HomeContent {
+  hero: HeroContent;
+  shopByRange: ShopByRangeContent;
+  fabricLibrary: FabricLibraryContent;
+  processSteps: ProcessStepsContent;
+}

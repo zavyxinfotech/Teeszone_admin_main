@@ -1,9 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { collectionsApi, fabricsApi, productsApi, reviewsApi } from "@/lib/api";
+import { collectionsApi, fabricsApi, homeContentApi, productsApi, reviewsApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import type { CollectionInput, FabricInput, ProductInput, ReviewInput } from "@/lib/types";
+import type { CollectionInput, FabricInput, HomeContent, ProductInput, ReviewInput } from "@/lib/types";
 import { useApiMutation } from "./use-api-mutation";
 
 export const keys = {
@@ -13,6 +13,7 @@ export const keys = {
   navigation: ["navigation"] as const,
   fabrics: ["fabrics"] as const,
   reviews: ["reviews"] as const,
+  homeContent: ["home-content"] as const,
   promotions: ["promotions"] as const,
   promotion: (id: string) => ["promotions", id] as const,
   enquiries: ["enquiries"] as const,
@@ -114,3 +115,15 @@ export const useUpdateReview = (onSuccess?: () => void) =>
   });
 export const useDeleteReview = () =>
   useApiMutation((id: string) => reviewsApi.remove(id), { invalidate: [keys.reviews, keys.dashboard] });
+
+// ---------- Home Content ----------
+export function useHomeContent() {
+  const enabled = useEnabled();
+  return useQuery({ queryKey: keys.homeContent, queryFn: homeContentApi.get, enabled });
+}
+
+export const useUpdateHomeContent = (onSuccess?: () => void) =>
+  useApiMutation((input: HomeContent) => homeContentApi.update(input), {
+    invalidate: [keys.homeContent],
+    onSuccess: () => onSuccess?.(),
+  });

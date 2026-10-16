@@ -35,6 +35,7 @@ export const NAV: NavGroup[] = [
   {
     title: "Content",
     items: [
+      { href: "/home-content", label: "Home Page", icon: LayoutDashboard },
       { href: "/fabrics", label: "Fabrics", icon: Shirt },
       { href: "/reviews", label: "Reviews", icon: MessageSquareQuote },
     ],
