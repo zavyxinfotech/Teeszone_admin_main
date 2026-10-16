@@ -1,29 +1,60 @@
 # TeesZone Admin Dashboard
 
-Administrative back office for the TeesZone storefront: products catalog, collections, promotions, fabrics, customer reviews, inquiries, and customer management. Directly interfaces with the TeesZone Fastify API (`http://localhost:4010`).
+Administrative back-office web application for **TeesZone**: product catalog, collections, homepage CMS, product likes tracking, customer inquiries, reviews, promotions, and customer management. Directly interfaces with the TeesZone Fastify API (`http://localhost:4010`).
 
-- **Framework**: Next.js 16 (App Router)
+- **Framework**: Next.js 16 (App Router) & React 19
 - **Language**: TypeScript (Strict Mode)
 - **Styling**: Tailwind CSS & shadcn/ui (Radix Primitives)
-- **State & Tables**: TanStack Query & TanStack Table
+- **Data & Tables**: TanStack Query & TanStack Table
 - **Forms & Validation**: react-hook-form + Zod
 
 ---
 
-## Recent Updates & Improvements
+## Admin Modules & Key Features
 
-1. **Authentication Credentials**:
-   - Authorized Administrator Login: `teeszoneindia@gmail.com`
-   - Secure dashboard authentication with persistent token storage.
+### 1. Product Likes & Wishlist Tracking (`/likes`)
+- Dedicated administrative overview of products saved by customers.
+- 4 KPI metric cards: **Total Likes**, **Interested Customers**, **Products Saved**, and **Most Liked Item**.
+- Detailed data table with customer name, email, phone number, company, liked product (with direct link to storefront PDP), and timestamp.
+- Real-time search filter across customer details and product names.
 
-2. **Catalog Synchronization**:
-   - Removed deprecated segments (e.g. `unisex`).
-   - Integrated full segment support: `men`, `women`, `kids`, `hoodies`, and `specialty`.
-   - Collections view aligns 1:1 with live storefront navigation.
+### 2. Homepage Content CMS (`/home-content`)
+- Visual CMS allowing store managers to update live storefront content without code changes:
+  - **Hero Split**: Main headline, subheadline, CTA text, CTA link, desktop banner image, and mobile background image.
+  - **Shop By Range**: Category cards, images, titles, and routing links.
+  - **The Fabric Library**: Fabric title, GSM, composition, image, and descriptions.
+  - **The TeesZone Process**: Step titles, descriptions, and icon configurations.
 
-3. **Products Table UI Optimization**:
-   - Fixed text overflow and alignment conflicts between the Collections column and Price/Discount column.
-   - Constrained layout badges and tags for clean responsive presentation.
+### 3. Catalog & Inventory Management (`/products`)
+- Complete product lifecycle management with automated AWS S3 image uploads.
+- Variant manager for color shades, size grids, SKU generation, and volume-tiered pricing.
+- In-line editor for the product's live "Orders Delivered" counter.
+
+### 4. Collections & Categorization (`/collections`)
+- Multi-category management aligned 1:1 with storefront navigation: `men`, `women`, `kids`, `hoodies`, and `specialty`.
+
+### 5. Reviews, Inquiries & Customers (`/reviews`, `/enquiries`, `/customers`)
+- **Reviews**: Moderation and management of customer testimonials.
+- **Enquiries**: In-depth wholesale quote requests and custom garment specifications.
+- **Customers**: Registered customer roster with contact and account details.
+
+---
+
+## Security & Route Protection
+
+- **Role-Based Guards**: Every dashboard page is wrapped with `<AuthGuard>` and `useRequireAdmin()`.
+- **Session Verification**: Validates the stored JWT token with `/api/auth/me` on startup. If the account does not possess the `ADMIN` role, the visitor is immediately bounced to `/login`.
+- **Zero Client Key Exposure**: No backend database credentials, JWT secret keys, or payment secret keys are stored or accessible in the client bundle.
+
+---
+
+## Admin Credentials
+
+- `teeszoneindia@gmail.com` | `teeszone@2025`
+- `vijayadarshini@teeszone.in` | `tees@2026`
+- `archana@teeszone.in` | `tees@2026`
+- `nithyasri@teeszone.in` | `tees@2026`
+- `vasuki@zavyx.in` | `tees@2026`
 
 ---
 
@@ -46,16 +77,6 @@ NEXT_PUBLIC_STORE_URL=http://localhost:3000
 npm run dev
 ```
 Open [http://localhost:3001](http://localhost:3001) in your browser.
-
----
-
-## Admin Credentials
-
-1. **Email**: `teeszoneindia@gmail.com` | **Password**: `teeszone@2025`
-2. **Email**: `vijayadarshini@teeszone.in` | **Password**: `tees@2026`
-3. **Email**: `archana@teeszone.in` | **Password**: `tees@2026`
-4. **Email**: `nithyasri@teeszone.in` | **Password**: `tees@2026`
-5. **Email**: `vasuki@zavyx.in` | **Password**: `tees@2026`
 
 ---
 
