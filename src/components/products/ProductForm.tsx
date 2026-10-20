@@ -70,6 +70,7 @@ const schema = z.object({
   isActive: z.boolean(),
   sortOrder: z.number({ invalid_type_error: "Required" }).int(),
   ordersDelivered: z.number({ invalid_type_error: "Must be a number" }).int().nonnegative().optional(),
+  sizeChartImage: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -100,6 +101,7 @@ const defaults: FormValues = {
   isActive: true,
   sortOrder: 0,
   ordersDelivered: 850,
+  sizeChartImage: "",
 };
 
 export const productToValues = (p: AdminProduct, duplicate = false): FormValues => ({
@@ -122,6 +124,7 @@ export const productToValues = (p: AdminProduct, duplicate = false): FormValues 
   isActive: p.isActive,
   sortOrder: p.sortOrder,
   ordersDelivered: p.ordersDelivered != null ? p.ordersDelivered : 850,
+  sizeChartImage: p.sizeChartImage || "",
 });
 
 export function ProductForm({ product, initial }: { product?: AdminProduct; initial?: FormValues }) {
@@ -506,10 +509,10 @@ export function ProductForm({ product, initial }: { product?: AdminProduct; init
 
           <Card>
             <CardHeader>
-              <CardTitle>Sizes</CardTitle>
-              <CardDescription>Shown in this order on the size split.</CardDescription>
+              <CardTitle>Sizes &amp; Size Chart</CardTitle>
+              <CardDescription>Configure sizes and upload or select custom size chart image for this product.</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <FormRow label="Sizes" error={errors.sizes?.message}>
                 <Controller
                   control={control}
@@ -517,6 +520,26 @@ export function ProductForm({ product, initial }: { product?: AdminProduct; init
                   render={({ field }) => <TagInput value={field.value} onChange={field.onChange} presets={SIZE_PRESETS} placeholder="Add a size" />}
                 />
               </FormRow>
+
+              <div className="border-t pt-4">
+                <FormRow
+                  label="Size Chart Image"
+                  hint="WebP/PNG/JPG image stored in AWS S3 bucket. Displays in modal when customers click 'Size Chart' on the storefront product page."
+                  error={errors.sizeChartImage?.message}
+                >
+                  <Controller
+                    control={control}
+                    name="sizeChartImage"
+                    render={({ field }) => (
+                      <ImageField
+                        value={field.value || ""}
+                        onChange={(url) => field.onChange(url)}
+                        placeholder="https://teeszone-catalogue-images-2026.s3.ap-southeast-2.amazonaws.com/..."
+                      />
+                    )}
+                  />
+                </FormRow>
+              </div>
             </CardContent>
           </Card>
         </div>

@@ -52,6 +52,7 @@ export interface Product {
   bestSeller?: boolean;
   megaSale?: boolean;
   ordersDelivered?: number;
+  sizeChartImage?: string | null;
 }
 
 export interface Review {
@@ -144,6 +145,7 @@ export interface ProductInput {
   isActive: boolean;
   sortOrder: number;
   ordersDelivered?: number;
+  sizeChartImage?: string | null;
 }
 
 export interface AdminCollection extends Collection {

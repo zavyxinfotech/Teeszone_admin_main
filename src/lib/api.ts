@@ -110,6 +110,8 @@ export const productsApi = {
   create: (input: ProductInput) => requestFull<AdminProduct>("/products/", { method: "POST", body: input }),
   update: (id: string, input: ProductInput) =>
     requestFull<AdminProduct>(`/products/${id}`, { method: "PUT", body: input }),
+  updateSizeChart: (id: string, sizeChartImage: string | null) =>
+    requestFull<AdminProduct>(`/products/admin/${id}/size-chart`, { method: "PUT", body: { sizeChartImage } }),
   remove: (id: string) => requestFull<{ deleted: boolean }>(`/products/${id}`, { method: "DELETE" }),
 };
 
