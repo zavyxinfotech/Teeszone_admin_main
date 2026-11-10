@@ -191,3 +191,63 @@ export const uploadApi = {
     return request<{ url: string }>("/upload/image", { method: "POST", formData: fd });
   },
 };
+
+// ---------- Customer Activities ----------
+
+export interface CustomerActivityItem {
+  id: string;
+  userId?: string | null;
+  userName?: string | null;
+  userEmail?: string | null;
+  activityType: string;
+  productId?: string | null;
+  productName?: string | null;
+  orderId?: string | null;
+  status: string;
+  details?: any;
+  ipAddress?: string | null;
+  createdAt: string;
+}
+
+export const activityApi = {
+  list: (params: {
+    search?: string;
+    activityType?: string;
+    productId?: string;
+    startDate?: string;
+    endDate?: string;
+    limit?: number;
+    offset?: number;
+  }) =>
+    request<{
+      items: CustomerActivityItem[];
+      total: number;
+      typeSummary: Record<string, number>;
+    }>(`/activity${qs(params as any)}`),
+};
+
+// ---------- Customer Orders ----------
+
+export interface AdminOrder {
+  id: string;
+  orderNumber: string;
+  userId?: string | null;
+  userName?: string | null;
+  userEmail?: string | null;
+  userPhone?: string | null;
+  razorpayOrderId?: string | null;
+  razorpayPaymentId?: string | null;
+  amount: number;
+  currency: string;
+  status: string;
+  items: any[];
+  shippingAddress?: any;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const ordersApi = {
+  list: (params: { search?: string; status?: string; limit?: number; offset?: number }) =>
+    request<{ orders: AdminOrder[]; total: number }>(`/orders/admin${qs(params as any)}`),
+};
+

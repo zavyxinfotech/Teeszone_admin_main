@@ -1,4 +1,5 @@
 import {
+  Activity,
   BadgePercent,
   Inbox,
   LayoutDashboard,
@@ -8,6 +9,7 @@ import {
   MessageSquareQuote,
   Package,
   Shirt,
+  ShoppingBag,
   Users,
   Heart,
 } from "lucide-react";
@@ -42,8 +44,10 @@ export const NAV: NavGroup[] = [
     ],
   },
   {
-    title: "People",
+    title: "People & Monitoring",
     items: [
+      { href: "/activities", label: "Customer Activities", icon: Activity },
+      { href: "/orders", label: "Customer Orders", icon: ShoppingBag },
       { href: "/likes", label: "Product Likes", icon: Heart },
       { href: "/enquiries", label: "Enquiries", icon: Inbox },
       { href: "/customers", label: "Customers", icon: Users },
