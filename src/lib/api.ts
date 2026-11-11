@@ -20,6 +20,8 @@ import type {
   FabricInput,
   HomeContent,
   Paginated,
+  ProductColorModel,
+  ProductColorModelInput,
   ProductInput,
   PromotionInput,
   ReviewInput,
@@ -112,6 +114,9 @@ export const productsApi = {
     requestFull<AdminProduct>(`/products/${id}`, { method: "PUT", body: input }),
   updateSizeChart: (id: string, sizeChartImage: string | null) =>
     requestFull<AdminProduct>(`/products/admin/${id}/size-chart`, { method: "PUT", body: { sizeChartImage } }),
+  getColorModels: (slug: string) => request<ProductColorModel[]>(`/products/${slug}/3d-models`),
+  saveColorModel: (slug: string, body: ProductColorModelInput) =>
+    requestFull<ProductColorModel>(`/products/${slug}/3d-models`, { method: "POST", body }),
   remove: (id: string) => requestFull<{ deleted: boolean }>(`/products/${id}`, { method: "DELETE" }),
 };
 

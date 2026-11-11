@@ -19,6 +19,7 @@ import { TagInput } from "@/components/shared/TagInput";
 import { useCollections, useCreateProduct, useFabrics, useUpdateProduct } from "@/hooks/use-catalog";
 import { formatINR, offPct, slugify } from "@/lib/format";
 import { isVirtualCollection, type AdminProduct, type ProductInput } from "@/lib/types";
+import { Product3DModelsCard } from "./Product3DModelsCard";
 
 type ColorSlotKey = "backImage" | "chestImage" | "detailImage" | "image4" | "image5";
 
@@ -506,6 +507,11 @@ export function ProductForm({ product, initial }: { product?: AdminProduct; init
               </Button>
             </CardContent>
           </Card>
+
+          {/* 3D Customization Models (Color-Specific) */}
+          {(product?.slug === "aerosoft-polo-200" || watch("slug") === "aerosoft-polo-200") && (
+            <Product3DModelsCard slug={product?.slug || watch("slug") || "aerosoft-polo-200"} />
+          )}
 
           <Card>
             <CardHeader>

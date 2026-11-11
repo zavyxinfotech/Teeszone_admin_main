@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { collectionsApi, fabricsApi, homeContentApi, likesApi, productsApi, reviewsApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import type { CollectionInput, FabricInput, HomeContent, ProductInput, ReviewInput } from "@/lib/types";
+import type { CollectionInput, FabricInput, HomeContent, ProductColorModelInput, ProductInput, ReviewInput } from "@/lib/types";
 import { useApiMutation } from "./use-api-mutation";
 
 export const keys = {
@@ -55,6 +55,20 @@ export const useUpdateProduct = (onSuccess?: () => void) =>
 export const useDeleteProduct = () =>
   useApiMutation((id: string) => productsApi.remove(id), {
     invalidate: [keys.products, keys.collections, keys.dashboard],
+  });
+
+export function useProductColorModels(slug: string | undefined) {
+  const enabled = useEnabled();
+  return useQuery({
+    queryKey: ["product-color-models", slug ?? ""],
+    queryFn: () => productsApi.getColorModels(slug!),
+    enabled: enabled && !!slug,
+  });
+}
+
+export const useSaveProductColorModel = (slug: string) =>
+  useApiMutation((body: ProductColorModelInput) => productsApi.saveColorModel(slug, body), {
+    invalidate: [["product-color-models", slug]],
   });
 
 // ---------- Collections ----------

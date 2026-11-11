@@ -28,6 +28,24 @@ export interface ProductColor {
   image5?: string;
 }
 
+export interface ProductColorModel {
+  id?: string;
+  productId?: string;
+  colorName: string;
+  colorHex: string;
+  frontModelUrl: string;
+  backModelUrl: string;
+  isActive?: boolean;
+}
+
+export interface ProductColorModelInput {
+  colorName: string;
+  colorHex: string;
+  frontModelUrl: string;
+  backModelUrl: string;
+  isActive?: boolean;
+}
+
 export interface QtyDiscount {
   minQty: number;
   offPct: number;
