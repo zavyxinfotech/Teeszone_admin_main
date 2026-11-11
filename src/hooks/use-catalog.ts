@@ -1,9 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { collectionsApi, fabricsApi, homeContentApi, likesApi, productsApi, reviewsApi } from "@/lib/api";
+import { collectionsApi, customization3DApi, fabricsApi, homeContentApi, likesApi, productsApi, reviewsApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import type { CollectionInput, FabricInput, HomeContent, ProductColorModelInput, ProductInput, ReviewInput } from "@/lib/types";
+import type { CollectionInput, CustomizationColorModel, FabricInput, HomeContent, ProductColorModelInput, ProductInput, ReviewInput } from "@/lib/types";
 import { useApiMutation } from "./use-api-mutation";
 
 export const keys = {
@@ -69,6 +69,26 @@ export function useProductColorModels(slug: string | undefined) {
 export const useSaveProductColorModel = (slug: string) =>
   useApiMutation((body: ProductColorModelInput) => productsApi.saveColorModel(slug, body), {
     invalidate: [["product-color-models", slug]],
+  });
+
+// ---------- Customization 3D Models ----------
+export function useCustomization3DModels() {
+  const enabled = useEnabled();
+  return useQuery({
+    queryKey: ["customization-3d-models"],
+    queryFn: customization3DApi.adminList,
+    enabled,
+  });
+}
+
+export const useUpsertCustomization3DModel = () =>
+  useApiMutation((data: Partial<CustomizationColorModel>) => customization3DApi.adminUpsert(data), {
+    invalidate: [["customization-3d-models"]],
+  });
+
+export const useDeleteCustomization3DModel = () =>
+  useApiMutation((id: string) => customization3DApi.adminDelete(id), {
+    invalidate: [["customization-3d-models"]],
   });
 
 // ---------- Collections ----------

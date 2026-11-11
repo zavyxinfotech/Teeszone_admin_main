@@ -33,6 +33,7 @@ export const NAV: NavGroup[] = [
       { href: "/products", label: "Products", icon: Package },
       { href: "/collections", label: "Collections", icon: Layers },
       { href: "/promotions", label: "Promotions", icon: BadgePercent },
+      { href: "/customization-3d", label: "3D T-Shirt Models", icon: Shirt },
     ],
   },
   {

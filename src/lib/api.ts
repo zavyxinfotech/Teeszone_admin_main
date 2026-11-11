@@ -17,6 +17,7 @@ import type {
   DashboardStats,
   Enquiry,
   EnquiryStatus,
+  CustomizationColorModel,
   FabricInput,
   HomeContent,
   Paginated,
@@ -118,6 +119,25 @@ export const productsApi = {
   saveColorModel: (slug: string, body: ProductColorModelInput) =>
     requestFull<ProductColorModel>(`/products/${slug}/3d-models`, { method: "POST", body }),
   remove: (id: string) => requestFull<{ deleted: boolean }>(`/products/${id}`, { method: "DELETE" }),
+};
+
+export const customization3DApi = {
+  listActive: () => request<CustomizationColorModel[]>("/customization/3d-models"),
+  adminList: () => request<CustomizationColorModel[]>("/customization/admin/3d-models"),
+  adminUpsert: (data: Partial<CustomizationColorModel>) =>
+    requestFull<CustomizationColorModel>("/customization/admin/3d-models", { method: "POST", body: data }),
+  adminDelete: (id: string) =>
+    requestFull<{ deleted: boolean }>(`/customization/admin/3d-models/${id}`, { method: "DELETE" }),
+  adminUpload: (file: File, colorSlug: string, view: "front" | "back") => {
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("colorSlug", colorSlug);
+    fd.append("view", view);
+    return requestFull<{ url: string; s3Key: string }>("/customization/admin/upload-3d-model", {
+      method: "POST",
+      formData: fd,
+    });
+  },
 };
 
 export const collectionsApi = {
