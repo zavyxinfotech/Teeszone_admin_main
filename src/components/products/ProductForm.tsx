@@ -509,8 +509,8 @@ export function ProductForm({ product, initial }: { product?: AdminProduct; init
           </Card>
 
           {/* 3D Customization Models (Color-Specific) */}
-          {(product?.slug === "aerosoft-polo-200" || watch("slug") === "aerosoft-polo-200") && (
-            <Product3DModelsCard slug={product?.slug || watch("slug") || "aerosoft-polo-200"} />
+          {Boolean(product?.slug?.includes("polo") || watch("slug")?.includes("polo")) && (
+            <Product3DModelsCard slug={product?.slug || watch("slug") || "mens-polo-half-sleeve-240"} />
           )}
 
           <Card>

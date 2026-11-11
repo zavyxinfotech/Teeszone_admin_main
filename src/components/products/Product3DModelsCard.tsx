@@ -205,3 +205,4 @@ export function Product3DModelsCard({ slug }: Product3DModelsCardProps) {
     </Card>
   );
 }
+
