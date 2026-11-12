@@ -8,16 +8,19 @@ export const formatDate = (iso: string | null | undefined) =>
 export const formatDateTime = (iso: string | null | undefined) =>
   iso
     ? new Date(iso).toLocaleString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
     : "—";
 
-export const offPct = (mrp: number, price: number) =>
-  mrp > 0 ? Math.max(0, Math.round((1 - price / mrp) * 100)) : 0;
+export const offPct = (mrp: number, price: number) => {
+  if (mrp <= 0) return 0;
+  const raw = Math.max(0, ((mrp - price) / mrp) * 100);
+  return Number.isInteger(raw) ? raw : Number(raw.toFixed(2));
+};
 
 export const slugify = (s: string) =>
   s
