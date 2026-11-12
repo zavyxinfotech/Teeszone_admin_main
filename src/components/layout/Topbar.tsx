@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { LogOut, Menu, UserRound } from "lucide-react";
+import { LogOut, Menu, MessageCircle, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -40,7 +40,18 @@ export function Topbar() {
 
       <h1 className="text-base font-semibold sm:text-lg">{pageTitle(pathname)}</h1>
 
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex items-center gap-2 sm:gap-3">
+        <a
+          href="https://wa.me/917550067704"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hidden sm:inline-flex items-center gap-1.5 rounded-lg bg-[#25D366]/10 text-emerald-700 hover:bg-[#25D366]/20 border border-emerald-300 px-2.5 py-1 text-xs font-bold transition-all"
+          title="Open TeesZone Admin WhatsApp Support"
+        >
+          <MessageCircle size={14} className="text-[#25D366]" />
+          <span>Admin WhatsApp</span>
+        </a>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="gap-2">

@@ -8,6 +8,8 @@ import {
   ExternalLink,
   Eye,
   Layers,
+  Mail,
+  MessageCircle,
   Package,
   Palette,
   RefreshCw,
@@ -142,9 +144,25 @@ export function OrdersView() {
                     {formatDateTime(ord.createdAt)}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground">
-                      <Eye size={14} />
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      {ord.userPhone && (
+                        <a
+                          href={`https://wa.me/${ord.userPhone.replace(/\D/g, "")}?text=${encodeURIComponent(
+                            `Hi ${ord.userName || "Customer"}! Regarding your TeesZone Order #${ord.orderNumber}: your order is confirmed and in production.`
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex h-7 w-7 items-center justify-center rounded-md text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
+                          title="Message Customer on WhatsApp"
+                        >
+                          <MessageCircle size={15} />
+                        </a>
+                      )}
+                      <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground">
+                        <Eye size={14} />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -175,13 +193,34 @@ export function OrdersView() {
 
               <div className="space-y-5 text-xs sm:text-sm divide-y divide-border">
                 {/* Customer */}
-                <div className="pt-2 space-y-1">
-                  <span className="font-bold uppercase tracking-wider text-[11px] text-muted-foreground">
-                    Customer Info
-                  </span>
+                <div className="pt-2 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold uppercase tracking-wider text-[11px] text-muted-foreground">
+                      Customer Info
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">
+                      <Mail size={10} />
+                      <span>Notified via info@teeszone.in</span>
+                    </span>
+                  </div>
                   <p className="font-semibold text-foreground text-sm">{selectedOrder.userName || "Customer"}</p>
                   <p className="text-muted-foreground">{selectedOrder.userEmail}</p>
-                  {selectedOrder.userPhone && <p className="text-muted-foreground">{selectedOrder.userPhone}</p>}
+                  {selectedOrder.userPhone && (
+                    <div className="flex items-center gap-2 pt-1">
+                      <p className="text-muted-foreground font-medium">{selectedOrder.userPhone}</p>
+                      <a
+                        href={`https://wa.me/${selectedOrder.userPhone.replace(/\D/g, "")}?text=${encodeURIComponent(
+                          `Hi ${selectedOrder.userName || "Customer"}! Regarding your TeesZone Order #${selectedOrder.orderNumber}: your custom apparel order has been received and is being processed by our production team. Reach out if you need mockup changes!`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#25D366] px-2.5 py-1 text-xs font-bold text-white hover:bg-[#20ba5a] transition-all cursor-pointer shadow-2xs"
+                      >
+                        <MessageCircle size={13} />
+                        <span>Chat on WhatsApp</span>
+                      </a>
+                    </div>
+                  )}
                 </div>
 
                 {/* Items & Custom Mockups */}
