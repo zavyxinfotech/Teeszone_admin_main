@@ -53,7 +53,6 @@ Administrative back-office web application for **TeesZone**: product catalog, co
 - `teeszoneindia@gmail.com` | `teeszone@2025`
 - `vijayadarshini@teeszone.in` | `tees@2026`
 - `archana@teeszone.in` | `tees@2026`
-- `nithyasri@teeszone.in` | `tees@2026`
 - `vasuki@zavyx.in` | `tees@2026`
 
 ---

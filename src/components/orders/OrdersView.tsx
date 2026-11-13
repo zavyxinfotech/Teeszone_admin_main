@@ -1,27 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
+  AlertCircle,
   CheckCircle,
+  CheckCircle2,
   Clock,
   Download,
   ExternalLink,
   Eye,
   Layers,
+  Loader2,
   Mail,
   MessageCircle,
   Package,
   Palette,
   RefreshCw,
   Search,
+  Send,
   Shirt,
   ShoppingBag,
   Sparkles,
+  Star,
+  Truck,
   User,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Sheet,
   SheetContent,
@@ -42,25 +55,112 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useAdminOrders } from "@/hooks/use-activity";
 import { formatDateTime } from "@/lib/format";
-import type { AdminOrder } from "@/lib/api";
+import { ordersApi, type AdminOrder } from "@/lib/api";
 
 export function OrdersView() {
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(null);
+
+  // Status update states inside Sheet
+  const [targetStatus, setTargetStatus] = useState<"Order Placed" | "Processing" | "Dispatched">("Order Placed");
+  const [trackingInput, setTrackingInput] = useState("");
+  const [courierInput, setCourierInput] = useState("");
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [statusFeedback, setStatusFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   const { data, isLoading, isFetching, refetch } = useAdminOrders({
     search: search.trim() || undefined,
+    status: statusFilter === "ALL" ? undefined : statusFilter,
     limit: 50,
   });
 
   const orders = data?.orders ?? [];
+
+  // Synchronize status form fields when selectedOrder changes
+  useEffect(() => {
+    if (selectedOrder) {
+      const normalizedStatus =
+        selectedOrder.status === "Processing"
+          ? "Processing"
+          : selectedOrder.status === "Dispatched"
+          ? "Dispatched"
+          : "Order Placed";
+      setTargetStatus(normalizedStatus);
+      setTrackingInput(selectedOrder.trackingId || "");
+      setCourierInput(selectedOrder.courierName || "");
+      setStatusFeedback(null);
+    }
+  }, [selectedOrder]);
+
+  const handleUpdateStatus = async () => {
+    if (!selectedOrder) return;
+    setIsUpdatingStatus(true);
+    setStatusFeedback(null);
+
+    try {
+      const res = await ordersApi.updateStatus(selectedOrder.id, {
+        status: targetStatus,
+        trackingId: trackingInput.trim() || undefined,
+        courierName: courierInput.trim() || undefined,
+      });
+
+      if (res?.order) {
+        setSelectedOrder(res.order);
+        setStatusFeedback({
+          type: "success",
+          message: `Order status successfully updated to "${targetStatus}". Customer has been notified.`,
+        });
+        refetch();
+      }
+    } catch (err: any) {
+      setStatusFeedback({
+        type: "error",
+        message: err.message || "Failed to update order status.",
+      });
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
+  const renderStatusBadge = (status: string) => {
+    if (status === "Order Placed" || status === "PAID") {
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200 px-2.5 py-0.5 text-[11px] font-bold">
+          <Clock size={12} className="text-sky-600" />
+          <span>Order Placed</span>
+        </span>
+      );
+    }
+    if (status === "Processing") {
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-0.5 text-[11px] font-bold">
+          <RefreshCw size={12} className="text-amber-600 animate-spin" />
+          <span>Processing</span>
+        </span>
+      );
+    }
+    if (status === "Dispatched") {
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300 px-2.5 py-0.5 text-[11px] font-bold">
+          <Truck size={12} className="text-emerald-700" />
+          <span>Dispatched</span>
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-0.5 text-[11px] font-bold">
+        <span>{status}</span>
+      </span>
+    );
+  };
 
   return (
     <>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4">
         <PageHeader
           title="Customer Orders"
-          description="View and manage all customer wholesale orders, payment verification and manufacturing requests."
+          description="View and manage all customer wholesale orders, status transitions, and Google review feedback."
         />
         <div className="flex items-center gap-2 self-start sm:self-auto">
           <Button
@@ -87,6 +187,22 @@ export function OrdersView() {
             className="pl-9 text-xs sm:text-sm"
           />
         </div>
+
+        {/* Status filter */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">Status:</span>
+          <Select value={statusFilter} onValueChange={(val) => setStatusFilter(val)}>
+            <SelectTrigger className="w-[150px] text-xs h-9">
+              <SelectValue placeholder="All Statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Statuses</SelectItem>
+              <SelectItem value="Order Placed">Order Placed</SelectItem>
+              <SelectItem value="Processing">Processing</SelectItem>
+              <SelectItem value="Dispatched">Dispatched</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {isLoading ? (
@@ -107,6 +223,7 @@ export function OrdersView() {
                 <TableHead>Items</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Review Status</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
@@ -136,9 +253,23 @@ export function OrdersView() {
                     ₹{ord.amount.toLocaleString("en-IN")}
                   </TableCell>
                   <TableCell>
-                    <Badge className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold">
-                      {ord.status}
-                    </Badge>
+                    {renderStatusBadge(ord.status)}
+                  </TableCell>
+                  <TableCell>
+                    {ord.status === "Dispatched" ? (
+                      <span className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-bold ${
+                        ord.reviewStatus === "Review Acknowledged"
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          : ord.reviewStatus === "Review Requested"
+                          ? "bg-amber-50 text-amber-700 border border-amber-200"
+                          : "bg-slate-50 text-slate-700 border border-slate-200"
+                      }`}>
+                        {ord.internalRating && <span>⭐ {ord.internalRating}/5</span>}
+                        <span>{ord.reviewStatus || "Review Pending"}</span>
+                      </span>
+                    ) : (
+                      <span className="text-[11px] text-muted-foreground italic">N/A</span>
+                    )}
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
                     {formatDateTime(ord.createdAt)}
@@ -148,13 +279,13 @@ export function OrdersView() {
                       {ord.userPhone && (
                         <a
                           href={`https://wa.me/${ord.userPhone.replace(/\D/g, "")}?text=${encodeURIComponent(
-                            `Hi ${ord.userName || "Customer"}! Regarding your TeesZone Order #${ord.orderNumber}: your order is confirmed and in production.`
+                            `Hi ${ord.userName || "Customer"}! Regarding your TeesZone Order #${ord.orderNumber} (Status: ${ord.status}): We are manufacturing your custom apparel. Reach out if you need updates!`
                           )}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="flex h-7 w-7 items-center justify-center rounded-md text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
-                          title="Message Customer on WhatsApp"
+                          className="p-1 text-emerald-600 hover:text-emerald-700 transition-colors"
+                          title="WhatsApp Customer"
                         >
                           <MessageCircle size={15} />
                         </a>
@@ -171,28 +302,185 @@ export function OrdersView() {
         </div>
       )}
 
-      {/* Order Details Slide-Over Sheet */}
+      {/* Order Details & Status Management Sheet */}
       <Sheet open={Boolean(selectedOrder)} onOpenChange={(open) => !open && setSelectedOrder(null)}>
         <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
           {selectedOrder && (
             <div className="space-y-6">
               <SheetHeader>
                 <div className="flex items-center gap-2">
-                  <Badge className="bg-emerald-600 text-white font-bold">{selectedOrder.status}</Badge>
+                  {renderStatusBadge(selectedOrder.status)}
                   <span className="text-xs text-muted-foreground font-mono">
                     {selectedOrder.orderNumber}
                   </span>
                 </div>
                 <SheetTitle className="text-xl font-heading font-black pt-1">
-                  Order Details &amp; Manufacturing Specs
+                  Order Details &amp; Lifecycle Management
                 </SheetTitle>
                 <SheetDescription>
                   Placed on {formatDateTime(selectedOrder.createdAt)}
                 </SheetDescription>
               </SheetHeader>
 
+              {/* Status Update Management Card */}
+              <div className="rounded-xl border border-[#80011F]/20 bg-rose-50/30 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold uppercase tracking-wider text-xs text-[#80011F] flex items-center gap-1.5">
+                    <RefreshCw size={14} />
+                    <span>Order Status Workflow</span>
+                  </span>
+                  {selectedOrder.statusUpdatedAt && (
+                    <span className="text-[10px] text-muted-foreground">
+                      Updated: {formatDateTime(selectedOrder.statusUpdatedAt)}
+                    </span>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-foreground block">
+                    Change Order Status:
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(["Order Placed", "Processing", "Dispatched"] as const).map((st) => (
+                      <button
+                        key={st}
+                        type="button"
+                        onClick={() => setTargetStatus(st)}
+                        className={`rounded-lg px-2.5 py-2 text-xs font-bold transition-all border cursor-pointer ${
+                          targetStatus === st
+                            ? "bg-[#80011F] text-white border-[#80011F] shadow-xs"
+                            : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+                        }`}
+                      >
+                        {st}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Additional inputs when Dispatched */}
+                {targetStatus === "Dispatched" && (
+                  <div className="pt-2 space-y-2 border-t border-[#80011F]/15 animate-in fade-in duration-150">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[11px] font-semibold text-muted-foreground block mb-1">
+                          Courier Partner
+                        </label>
+                        <Input
+                          value={courierInput}
+                          onChange={(e) => setCourierInput(e.target.value)}
+                          placeholder="e.g. Delhivery, BlueDart, DTDC"
+                          className="h-8 text-xs bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-semibold text-muted-foreground block mb-1">
+                          Tracking / AWB Number
+                        </label>
+                        <Input
+                          value={trackingInput}
+                          onChange={(e) => setTrackingInput(e.target.value)}
+                          placeholder="e.g. AWB987654321"
+                          className="h-8 text-xs bg-white font-mono"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground italic">
+                      * Updating to Dispatched will automatically trigger the Google Review notification workflow for the customer.
+                    </p>
+                  </div>
+                )}
+
+                {statusFeedback && (
+                  <div className={`p-2.5 rounded-lg text-xs font-medium flex items-center gap-2 ${
+                    statusFeedback.type === "success"
+                      ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                      : "bg-rose-50 text-rose-800 border border-rose-200"
+                  }`}>
+                    {statusFeedback.type === "success" ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
+                    <span>{statusFeedback.message}</span>
+                  </div>
+                )}
+
+                <Button
+                  size="sm"
+                  onClick={handleUpdateStatus}
+                  disabled={isUpdatingStatus}
+                  className="w-full bg-[#80011F] hover:bg-[#660119] text-white font-bold text-xs gap-1.5"
+                >
+                  {isUpdatingStatus ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
+                  <span>Save &amp; Notify Customer</span>
+                </Button>
+              </div>
+
+              {/* Customer Review Management (Dispatched Orders) */}
+              {selectedOrder.status === "Dispatched" && (
+                <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold uppercase tracking-wider text-xs text-foreground flex items-center gap-1.5">
+                      <Star size={14} className="text-[#80011F] fill-[#80011F]" />
+                      <span>Customer Review Management</span>
+                    </span>
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                      selectedOrder.reviewStatus === "Review Acknowledged"
+                        ? "bg-emerald-100 text-emerald-800"
+                        : selectedOrder.reviewStatus === "Review Requested"
+                        ? "bg-amber-100 text-amber-800"
+                        : "bg-slate-100 text-slate-800"
+                    }`}>
+                      {selectedOrder.reviewStatus || "Review Pending"}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5 bg-background p-3 rounded-lg border border-border/60">
+                    <span className="text-[11px] font-semibold text-muted-foreground block">
+                      Customer Internal Rating:
+                    </span>
+                    {selectedOrder.internalRating ? (
+                      <div className="flex items-center gap-2">
+                        <div className="flex text-amber-500">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              size={16}
+                              className={star <= selectedOrder.internalRating! ? "fill-amber-400 text-amber-500" : "text-gray-300"}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-xs font-bold text-foreground">
+                          {selectedOrder.internalRating} / 5 Stars
+                        </span>
+                        <span className="text-[10px] text-muted-foreground italic">
+                          (Internal customer feedback rating)
+                        </span>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground italic">
+                        Rating Pending — Customer has not submitted internal star rating yet.
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="text-[11px] text-muted-foreground space-y-1 border-t border-border/40 pt-2">
+                    <p className="font-medium text-foreground">Google Review Link Configured:</p>
+                    <a
+                      href="https://g.page/r/CShjds2c7FPzEBI/review"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#80011F] hover:underline flex items-center gap-1 text-[11px]"
+                    >
+                      <span>https://g.page/r/CShjds2c7FPzEBI/review</span>
+                      <ExternalLink size={10} />
+                    </a>
+                    <p className="text-[10px] text-muted-foreground italic">
+                      * Internal feedback is stored separately from public Google reviews. Redirect clicks cannot be used to verify actual Google review publication without third-party proof.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-5 text-xs sm:text-sm divide-y divide-border">
-                {/* Customer */}
+                {/* Customer Info */}
                 <div className="pt-2 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="font-bold uppercase tracking-wider text-[11px] text-muted-foreground">
@@ -210,7 +498,7 @@ export function OrdersView() {
                       <p className="text-muted-foreground font-medium">{selectedOrder.userPhone}</p>
                       <a
                         href={`https://wa.me/${selectedOrder.userPhone.replace(/\D/g, "")}?text=${encodeURIComponent(
-                          `Hi ${selectedOrder.userName || "Customer"}! Regarding your TeesZone Order #${selectedOrder.orderNumber}: your custom apparel order has been received and is being processed by our production team. Reach out if you need mockup changes!`
+                          `Hi ${selectedOrder.userName || "Customer"}! Regarding your TeesZone Order #${selectedOrder.orderNumber}: your order status is "${selectedOrder.status}". Reach out to us if you have any questions!`
                         )}`}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -223,10 +511,30 @@ export function OrdersView() {
                   )}
                 </div>
 
-                {/* Items & Custom Mockups */}
-                <div className="pt-4 space-y-4">
+                {/* Tracking Details if present */}
+                {(selectedOrder.trackingId || selectedOrder.courierName) && (
+                  <div className="pt-4 space-y-1">
+                    <span className="font-bold uppercase tracking-wider text-[11px] text-muted-foreground flex items-center gap-1.5">
+                      <Truck size={13} className="text-[#80011F]" />
+                      <span>Dispatch &amp; Tracking Information</span>
+                    </span>
+                    <div className="grid grid-cols-2 gap-2 bg-muted/40 p-2.5 rounded-lg border border-border/60">
+                      <div>
+                        <span className="text-muted-foreground block text-[10px]">Courier Service</span>
+                        <span className="font-bold text-foreground">{selectedOrder.courierName || "Standard Courier"}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block text-[10px]">Tracking Number</span>
+                        <span className="font-mono font-bold text-[#80011F]">{selectedOrder.trackingId || "—"}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Items */}
+                <div className="pt-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold uppercase tracking-wider text-[11px] text-muted-foreground">
+                    <span className="font-bold uppercase tracking-wider text-xs text-muted-foreground">
                       Purchased Items ({selectedOrder.items?.length || 0})
                     </span>
                   </div>
@@ -234,163 +542,109 @@ export function OrdersView() {
                   {(selectedOrder.items || []).map((it: any, idx: number) => {
                     const frontImg = it.frontPreviewUrl || it.customDesign?.frontPreviewUrl || it.image;
                     const backImg = it.backPreviewUrl || it.customDesign?.backPreviewUrl;
-                    const frontLogo = it.frontLogoUrl || it.customDesign?.frontLogoUrl || it.customDesign?.logoUrl;
-                    const backLogo = it.backLogoUrl || it.customDesign?.backLogoUrl;
-                    const design = it.customDesign || null;
+                    const design = it.customDesign;
                     const frontElements = design?.frontElements || [];
                     const backElements = design?.backElements || [];
 
                     return (
-                      <div key={idx} className="rounded-xl border border-border bg-card p-4 space-y-3.5 shadow-xs">
-                        <div className="flex items-start justify-between gap-3 border-b border-border/60 pb-2.5">
-                          <div>
-                            <p className="font-extrabold text-foreground text-sm leading-snug">{it.name}</p>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              Color: <span className="font-semibold text-foreground">{it.color || it.colorName}</span> · Size: <span className="font-semibold text-foreground">{it.size}</span> · Quantity: <span className="font-bold text-[#80011F]">{it.qty} pcs</span>
+                      <div
+                        key={idx}
+                        className="rounded-xl border border-border bg-card p-3 sm:p-4 space-y-3"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-0.5">
+                            <h4 className="font-bold text-sm text-foreground">{it.name}</h4>
+                            <p className="text-xs text-muted-foreground">
+                              Color: <span className="font-semibold text-foreground">{it.color}</span> · Size:{" "}
+                              <span className="font-semibold text-foreground">{it.size}</span>
                             </p>
+                            {it.customNote && (
+                              <p className="text-xs italic text-muted-foreground pt-0.5">
+                                Note: &ldquo;{it.customNote}&rdquo;
+                              </p>
+                            )}
                           </div>
-                          {it.colorHex && (
-                            <div
-                              className="h-5 w-5 rounded-full border border-border shrink-0 shadow-2xs"
-                              style={{ backgroundColor: it.colorHex }}
-                              title={it.color || it.colorName}
-                            />
-                          )}
+                          <div className="text-right">
+                            <span className="font-bold text-xs text-foreground block">
+                              {it.qty} pcs × ₹{it.unitPrice}
+                            </span>
+                            <span className="font-black text-sm text-[#80011F]">
+                              ₹{(it.qty * it.unitPrice).toLocaleString("en-IN")}
+                            </span>
+                          </div>
                         </div>
 
-                        {it.customNote && (
-                          <div className="rounded-lg bg-rose-50/80 border border-rose-200/80 p-2.5 text-xs text-[#80011F] font-medium leading-relaxed">
-                            <span className="font-bold block mb-0.5">Customization Note:</span>
-                            {it.customNote}
-                          </div>
-                        )}
-
-                        {/* Front & Back 3D Mockup Previews */}
+                        {/* Front & Back Mockup Previews */}
                         {(frontImg || backImg) && (
-                          <div className="space-y-2 pt-1">
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                              <Shirt size={13} className="text-[#80011F]" />
-                              <span>Front &amp; Back 3D Customization Mockups</span>
+                          <div className="space-y-1.5 pt-1">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                              <Sparkles size={11} className="text-[#80011F]" />
+                              <span>Customer 3D Customized Mockups</span>
                             </span>
-
-                            <div className="grid grid-cols-2 gap-3">
-                              {/* Front Mockup Card */}
-                              <div className="flex flex-col items-center rounded-xl border border-border bg-muted/20 p-2 text-center group">
-                                <span className="text-[10px] font-extrabold uppercase tracking-wide text-foreground mb-1 bg-background px-2 py-0.5 rounded-md border border-border/80">
-                                  Front View
-                                </span>
-                                {frontImg ? (
-                                  <div className="relative aspect-[1024/935] w-full max-h-48 flex items-center justify-center overflow-hidden rounded-lg bg-white/70 p-1">
+                            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                              {frontImg && (
+                                <div className="space-y-1">
+                                  <div className="relative aspect-square rounded-lg border border-border bg-white flex items-center justify-center p-1.5 overflow-hidden group">
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img
                                       src={frontImg}
                                       alt="Front Mockup"
-                                      className="h-full w-full object-contain filter drop-shadow-sm transition-transform duration-200 group-hover:scale-105"
+                                      className="max-h-full max-w-full object-contain"
                                     />
-                                  </div>
-                                ) : (
-                                  <div className="h-32 w-full flex items-center justify-center text-xs text-muted-foreground">
-                                    No Front Preview
-                                  </div>
-                                )}
-                                {frontImg && (
-                                  <a
-                                    href={frontImg}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-bold text-[#80011F] hover:underline"
-                                  >
-                                    <span>View High-Res</span>
-                                    <ExternalLink size={11} />
-                                  </a>
-                                )}
-                              </div>
-
-                              {/* Back Mockup Card */}
-                              <div className="flex flex-col items-center rounded-xl border border-border bg-muted/20 p-2 text-center group">
-                                <span className="text-[10px] font-extrabold uppercase tracking-wide text-foreground mb-1 bg-background px-2 py-0.5 rounded-md border border-border/80">
-                                  Back View
-                                </span>
-                                {backImg ? (
-                                  <div className="relative aspect-[1024/935] w-full max-h-48 flex items-center justify-center overflow-hidden rounded-lg bg-white/70 p-1">
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
-                                      src={backImg}
-                                      alt="Back Mockup"
-                                      className="h-full w-full object-contain filter drop-shadow-sm transition-transform duration-200 group-hover:scale-105"
-                                    />
-                                  </div>
-                                ) : (
-                                  <div className="h-32 w-full flex items-center justify-center text-xs text-muted-foreground">
-                                    No Back Preview
-                                  </div>
-                                )}
-                                {backImg && (
-                                  <a
-                                    href={backImg}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-bold text-[#80011F] hover:underline"
-                                  >
-                                    <span>View High-Res</span>
-                                    <ExternalLink size={11} />
-                                  </a>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Uploaded Logos Inspection */}
-                        {(frontLogo || backLogo) && (
-                          <div className="space-y-1.5 pt-1 border-t border-border/50">
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                              <Sparkles size={13} className="text-[#80011F]" />
-                              <span>Customer Logo Assets</span>
-                            </span>
-                            <div className="grid grid-cols-2 gap-2.5">
-                              {frontLogo && (
-                                <div className="flex items-center gap-2 rounded-lg border border-border bg-background p-2">
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img
-                                    src={frontLogo}
-                                    alt="Front Logo"
-                                    className="h-10 w-10 object-contain rounded border border-border/80 bg-white p-0.5"
-                                  />
-                                  <div className="truncate flex-1">
-                                    <p className="text-xs font-bold text-foreground truncate">Front Logo</p>
                                     <a
-                                      href={frontLogo}
-                                      download="front-logo"
+                                      href={frontImg}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="text-[11px] font-semibold text-[#80011F] hover:underline inline-flex items-center gap-1"
+                                      className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1.5 text-white font-bold text-xs transition-opacity"
                                     >
-                                      <Download size={11} />
-                                      <span>Download</span>
+                                      <Download size={14} />
+                                      <span>View Full</span>
+                                    </a>
+                                  </div>
+                                  <div className="flex items-center justify-between text-[10px] px-1">
+                                    <span className="font-bold text-muted-foreground">Front View</span>
+                                    <a
+                                      href={frontImg}
+                                      download={`Order-${selectedOrder.orderNumber}-Front.png`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-[#80011F] hover:underline flex items-center gap-0.5"
+                                    >
+                                      <Download size={10} /> Save
                                     </a>
                                   </div>
                                 </div>
                               )}
-                              {backLogo && (
-                                <div className="flex items-center gap-2 rounded-lg border border-border bg-background p-2">
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img
-                                    src={backLogo}
-                                    alt="Back Logo"
-                                    className="h-10 w-10 object-contain rounded border border-border/80 bg-white p-0.5"
-                                  />
-                                  <div className="truncate flex-1">
-                                    <p className="text-xs font-bold text-foreground truncate">Back Logo</p>
+
+                              {backImg && (
+                                <div className="space-y-1">
+                                  <div className="relative aspect-square rounded-lg border border-border bg-white flex items-center justify-center p-1.5 overflow-hidden group">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                      src={backImg}
+                                      alt="Back Mockup"
+                                      className="max-h-full max-w-full object-contain"
+                                    />
                                     <a
-                                      href={backLogo}
-                                      download="back-logo"
+                                      href={backImg}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="text-[11px] font-semibold text-[#80011F] hover:underline inline-flex items-center gap-1"
+                                      className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1.5 text-white font-bold text-xs transition-opacity"
                                     >
-                                      <Download size={11} />
-                                      <span>Download</span>
+                                      <Download size={14} />
+                                      <span>View Full</span>
+                                    </a>
+                                  </div>
+                                  <div className="flex items-center justify-between text-[10px] px-1">
+                                    <span className="font-bold text-muted-foreground">Back View</span>
+                                    <a
+                                      href={backImg}
+                                      download={`Order-${selectedOrder.orderNumber}-Back.png`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-[#80011F] hover:underline flex items-center gap-0.5"
+                                    >
+                                      <Download size={10} /> Save
                                     </a>
                                   </div>
                                 </div>

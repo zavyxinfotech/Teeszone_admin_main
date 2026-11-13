@@ -264,9 +264,17 @@ export interface AdminOrder {
   razorpayPaymentId?: string | null;
   amount: number;
   currency: string;
-  status: string;
+  status: "Order Placed" | "Processing" | "Dispatched" | string;
+  paymentStatus?: string;
   items: any[];
   shippingAddress?: any;
+  trackingId?: string | null;
+  courierName?: string | null;
+  statusUpdatedAt?: string | null;
+  reviewStatus?: "Review Requested" | "Review Pending" | "Review Acknowledged" | string;
+  internalRating?: number | null;
+  reviewDismissedAt?: string | null;
+  socialDismissed?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -274,5 +282,17 @@ export interface AdminOrder {
 export const ordersApi = {
   list: (params: { search?: string; status?: string; limit?: number; offset?: number }) =>
     request<{ orders: AdminOrder[]; total: number }>(`/orders/admin${qs(params as any)}`),
+  updateStatus: (
+    id: string,
+    payload: {
+      status: "Order Placed" | "Processing" | "Dispatched";
+      trackingId?: string;
+      courierName?: string;
+    }
+  ) =>
+    request<{ order: AdminOrder }>(`/orders/admin/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
 };
 
