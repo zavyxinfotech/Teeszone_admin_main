@@ -384,3 +384,32 @@ export interface UserProductLike {
   productName: string;
   createdAt: string;
 }
+
+export interface AdminPortfolioClient {
+  id: string;
+  clientName: string;
+  companyName: string;
+  businessSector: string;
+  category?: string | null;
+  description: string;
+  imageUrl: string;
+  imageUrls?: any;
+  productDetails?: string | null;
+  displayOrder: number;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AdminProductionVideo {
+  id: string;
+  videoTitle: string;
+  videoDescription: string;
+  category?: string | null;
+  videoUrl?: string | null;
+  thumbnailUrl: string;
+  displayOrder: number;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}

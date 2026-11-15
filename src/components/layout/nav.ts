@@ -12,6 +12,8 @@ import {
   ShoppingBag,
   Users,
   Heart,
+  Camera,
+  Video,
 } from "lucide-react";
 
 export interface NavItem {
@@ -40,6 +42,8 @@ export const NAV: NavGroup[] = [
     title: "Content",
     items: [
       { href: "/home-content", label: "Home Page", icon: LayoutDashboard },
+      { href: "/portfolio", label: "Client Portfolio", icon: Camera },
+      { href: "/production-videos", label: "Production Videos", icon: Video },
       { href: "/fabrics", label: "Fabrics", icon: Shirt },
       { href: "/reviews", label: "Reviews", icon: MessageSquareQuote },
     ],

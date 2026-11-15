@@ -296,3 +296,93 @@ export const ordersApi = {
     }),
 };
 
+// ---------- Client Portfolio ----------
+
+export interface PortfolioClientInput {
+  clientName: string;
+  companyName: string;
+  businessSector: string;
+  category?: string;
+  description: string;
+  imageUrl: string;
+  imageUrls?: any;
+  productDetails?: string;
+  displayOrder?: number;
+  isActive?: boolean;
+}
+
+export const portfolioApi = {
+  list: () =>
+    request<{ items: any[]; total: number }>("/portfolio/admin"),
+  create: (body: PortfolioClientInput) =>
+    request<any>("/portfolio/admin", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  update: (id: string, body: Partial<PortfolioClientInput>) =>
+    request<any>(`/portfolio/admin/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  delete: (id: string) =>
+    request<{ success: boolean; id: string }>(`/portfolio/admin/${id}`, {
+      method: "DELETE",
+    }),
+  uploadImage: async (file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    return request<{ url: string }>("/upload/image", {
+      method: "POST",
+      formData: fd,
+    });
+  },
+};
+
+// ---------- Production Videos ----------
+
+export interface ProductionVideoInput {
+  videoTitle: string;
+  videoDescription: string;
+  category?: string;
+  videoUrl?: string;
+  thumbnailUrl: string;
+  displayOrder?: number;
+  isActive?: boolean;
+}
+
+export const videosApi = {
+  list: () =>
+    request<{ items: any[]; total: number }>("/videos/admin"),
+  create: (body: ProductionVideoInput) =>
+    request<any>("/videos/admin", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  update: (id: string, body: Partial<ProductionVideoInput>) =>
+    request<any>(`/videos/admin/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  delete: (id: string) =>
+    request<{ success: boolean; id: string }>(`/videos/admin/${id}`, {
+      method: "DELETE",
+    }),
+  uploadVideo: async (file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    return request<{ url: string }>("/upload/video", {
+      method: "POST",
+      formData: fd,
+    });
+  },
+  uploadThumbnail: async (file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    return request<{ url: string }>("/upload/image", {
+      method: "POST",
+      formData: fd,
+    });
+  },
+};
+
+
