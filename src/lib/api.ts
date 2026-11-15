@@ -58,13 +58,21 @@ async function requestFull<T>(
   opts: { method?: string; body?: unknown; token?: string | null; formData?: FormData } = {},
 ): Promise<ApiResult<T>> {
   const token = opts.token === undefined ? authToken : opts.token;
+  const bodyContent =
+    opts.formData ??
+    (opts.body !== undefined
+      ? typeof opts.body === "string"
+        ? opts.body
+        : JSON.stringify(opts.body)
+      : undefined);
+
   const res = await fetch(`${API_URL}${path}`, {
     method: opts.method ?? "GET",
     headers: {
       ...(opts.body !== undefined ? { "content-type": "application/json" } : {}),
       ...(token ? { authorization: `Bearer ${token}` } : {}),
     },
-    body: opts.formData ?? (opts.body !== undefined ? JSON.stringify(opts.body) : undefined),
+    body: bodyContent,
   });
   const json = await res.json().catch(() => null);
   if (!res.ok) {
@@ -317,12 +325,12 @@ export const portfolioApi = {
   create: (body: PortfolioClientInput) =>
     request<any>("/portfolio/admin", {
       method: "POST",
-      body: JSON.stringify(body),
+      body,
     }),
   update: (id: string, body: Partial<PortfolioClientInput>) =>
     request<any>(`/portfolio/admin/${id}`, {
       method: "PATCH",
-      body: JSON.stringify(body),
+      body,
     }),
   delete: (id: string) =>
     request<{ success: boolean; id: string }>(`/portfolio/admin/${id}`, {
@@ -356,12 +364,12 @@ export const videosApi = {
   create: (body: ProductionVideoInput) =>
     request<any>("/videos/admin", {
       method: "POST",
-      body: JSON.stringify(body),
+      body,
     }),
   update: (id: string, body: Partial<ProductionVideoInput>) =>
     request<any>(`/videos/admin/${id}`, {
       method: "PATCH",
-      body: JSON.stringify(body),
+      body,
     }),
   delete: (id: string) =>
     request<{ success: boolean; id: string }>(`/videos/admin/${id}`, {

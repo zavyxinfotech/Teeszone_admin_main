@@ -100,6 +100,38 @@ export function ProductionVideosManagementView() {
     setDialogOpen(true);
   };
 
+  const capture5sThumbnail = (videoUrl: string) => {
+    if (!videoUrl) return;
+    try {
+      const vid = document.createElement("video");
+      vid.crossOrigin = "anonymous";
+      vid.src = videoUrl;
+      vid.currentTime = 5;
+      vid.onseeked = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width = vid.videoWidth || 640;
+          canvas.height = vid.videoHeight || 360;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+            setFormData((prev) => ({ ...prev, thumbnailUrl: dataUrl }));
+            toast.success("Captured 5th second frame as thumbnail");
+          }
+        } catch {
+          // Fallback to video time hash
+          setFormData((prev) => ({ ...prev, thumbnailUrl: `${videoUrl}#t=5` }));
+        }
+      };
+      vid.onerror = () => {
+        setFormData((prev) => ({ ...prev, thumbnailUrl: `${videoUrl}#t=5` }));
+      };
+    } catch {
+      setFormData((prev) => ({ ...prev, thumbnailUrl: `${videoUrl}#t=5` }));
+    }
+  };
+
   const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -108,6 +140,7 @@ export function ProductionVideosManagementView() {
     try {
       const { url } = await videosApi.uploadVideo(file);
       setFormData((prev) => ({ ...prev, videoUrl: url }));
+      capture5sThumbnail(url);
       toast.success("Production video uploaded to S3!");
     } catch (err: any) {
       toast.error(err?.message || "Failed to upload video to S3. Enter URL manually.");
@@ -119,18 +152,26 @@ export function ProductionVideosManagementView() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.videoTitle.trim() || !formData.thumbnailUrl.trim()) {
-      toast.error("Video title and thumbnail are required.");
+    if (!formData.videoTitle.trim()) {
+      toast.error("Video title is required.");
       return;
+    }
+
+    // Default to 5th second video frame or fallback thumbnail if admin does not provide one
+    const submissionData = { ...formData };
+    if (!submissionData.thumbnailUrl.trim()) {
+      submissionData.thumbnailUrl = submissionData.videoUrl
+        ? `${submissionData.videoUrl}#t=5`
+        : "/portfolio/01-zoho-crm.webp";
     }
 
     setSubmitting(true);
     try {
       if (editingItem) {
-        await videosApi.update(editingItem.id, formData);
+        await videosApi.update(editingItem.id, submissionData);
         toast.success("Production video updated successfully");
       } else {
-        await videosApi.create(formData);
+        await videosApi.create(submissionData);
         toast.success("Production video created successfully");
       }
       setDialogOpen(false);
@@ -314,36 +355,22 @@ export function ProductionVideosManagementView() {
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">
-                  Manufacturing Process Category *
-                </label>
-                <select
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs focus:outline-none focus:ring-1 focus:ring-ring"
-                >
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">
-                  Display Order
-                </label>
-                <Input
-                  type="number"
-                  value={formData.displayOrder}
-                  onChange={(e) =>
-                    setFormData({ ...formData, displayOrder: parseInt(e.target.value, 10) || 0 })
-                  }
-                />
-              </div>
+            {/* Manufacturing Process Category (Display Order removed per request) */}
+            <div>
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">
+                Manufacturing Process Category *
+              </label>
+              <select
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs focus:outline-none focus:ring-1 focus:ring-ring"
+              >
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Video File / URL */}
@@ -380,16 +407,30 @@ export function ProductionVideosManagementView() {
               </span>
             </div>
 
-            {/* Thumbnail Image */}
+            {/* Thumbnail Image (defaults to 5th-second video frame if not provided) */}
             <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">
-                Video Poster Thumbnail *
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Video Poster Thumbnail
+                </label>
+                {formData.videoUrl && (
+                  <button
+                    type="button"
+                    onClick={() => capture5sThumbnail(formData.videoUrl || "")}
+                    className="text-[11px] font-semibold text-[#80011F] hover:underline cursor-pointer"
+                  >
+                    Auto-grab 5th second frame
+                  </button>
+                )}
+              </div>
               <ImageField
                 value={formData.thumbnailUrl}
                 onChange={(url) => setFormData({ ...formData, thumbnailUrl: url })}
-                placeholder="/portfolio/01-zoho-crm.webp or S3 image URL"
+                placeholder="Defaults to video 5th second frame if left empty"
               />
+              <span className="text-[11px] text-muted-foreground mt-1 block">
+                Leave empty to automatically use the 5th second frame of the video.
+              </span>
             </div>
 
             <div>
