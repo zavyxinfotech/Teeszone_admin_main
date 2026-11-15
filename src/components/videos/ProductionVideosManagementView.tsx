@@ -23,23 +23,20 @@ import { videosApi, ProductionVideoInput } from "@/lib/api";
 import type { AdminProductionVideo } from "@/lib/types";
 
 const CATEGORIES = [
-  "T-Shirt Printing",
-  "Screen Printing",
-  "DTF Printing",
-  "Heat Transfer Printing",
-  "Embroidery",
-  "T-Shirt Customization",
-  "Quality Checking",
   "Packing & Dispatch",
-  "Finished Apparel Production",
+  "Apparel Packaging",
+  "Uniform Packaging",
+  "Quality Checking",
+  "Factory Production",
+  "In-House Manufacturing",
 ];
 
 const emptyForm: ProductionVideoInput = {
   videoTitle: "",
   videoDescription: "",
-  category: "Screen Printing",
+  category: "Packing & Dispatch",
   videoUrl: "",
-  thumbnailUrl: "/portfolio/01-zoho-crm.webp",
+  thumbnailUrl: "https://teeszone-catalogue-images-2026.s3.ap-southeast-2.amazonaws.com/teeszone/portfolio/01-zoho-crm.webp",
   displayOrder: 1,
   isActive: true,
 };
@@ -383,14 +380,13 @@ export function ProductionVideosManagementView() {
 
             <div>
               <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-1">
-                Process Description
+                Process Notes (Optional)
               </label>
               <Textarea
-                rows={3}
+                rows={2}
                 value={formData.videoDescription}
                 onChange={(e) => setFormData({ ...formData, videoDescription: e.target.value })}
-                placeholder="Describe the production activity, machinery, and techniques shown..."
-                required
+                placeholder="Optional notes..."
               />
             </div>
 
