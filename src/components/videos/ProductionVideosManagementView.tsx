@@ -36,10 +36,18 @@ const emptyForm: ProductionVideoInput = {
   videoDescription: "",
   category: "Packing & Dispatch",
   videoUrl: "",
-  thumbnailUrl: "https://teeszone-catalogue-images-2026.s3.ap-southeast-2.amazonaws.com/teeszone/portfolio/01-zoho-crm.webp",
+  thumbnailUrl: "/portfolio/01-zoho-crm.webp",
   displayOrder: 1,
   isActive: true,
 };
+
+function resolveAdminThumbnail(url: string): string {
+  if (!url) return "/portfolio/01-zoho-crm.webp";
+  if (url.startsWith("/")) return url;
+  const match = url.match(/([0-9]{2}-[^/]+\.(webp|png))/i);
+  if (match) return `/portfolio/${match[1]}`;
+  return url;
+}
 
 export function ProductionVideosManagementView() {
   const [items, setItems] = useState<AdminProductionVideo[]>([]);
@@ -206,13 +214,19 @@ export function ProductionVideosManagementView() {
                   <tr key={item.id} className="hover:bg-muted/30 transition-colors">
                     <td className="py-3 px-4">
                       <div className="relative h-12 w-16 overflow-hidden rounded bg-slate-900 border border-border flex items-center justify-center">
-                        <Image
-                          src={item.thumbnailUrl}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={resolveAdminThumbnail(item.thumbnailUrl)}
                           alt={item.videoTitle}
-                          fill
-                          className="object-cover opacity-80"
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            if (target.src.includes(".webp")) {
+                              target.src = target.src.replace(/\.webp$/i, ".png");
+                            }
+                          }}
+                          className="h-full w-full object-cover opacity-80"
                         />
-                        <Play size={14} className="relative z-10 fill-white text-white" />
+                        <Play size={14} className="absolute z-10 fill-white text-white pointer-events-none" />
                       </div>
                     </td>
                     <td className="py-3 px-4 font-bold text-foreground">

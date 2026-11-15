@@ -49,6 +49,14 @@ const emptyForm: PortfolioClientInput = {
   isActive: true,
 };
 
+function resolveAdminImage(url: string): string {
+  if (!url) return "/portfolio/01-zoho-crm.webp";
+  if (url.startsWith("/")) return url;
+  const match = url.match(/([0-9]{2}-[^/]+\.(webp|png))/i);
+  if (match) return `/portfolio/${match[1]}`;
+  return url;
+}
+
 export function PortfolioManagementView() {
   const [items, setItems] = useState<AdminPortfolioClient[]>([]);
   const [loading, setLoading] = useState(true);
@@ -196,11 +204,17 @@ export function PortfolioManagementView() {
                   <tr key={item.id} className="hover:bg-muted/30 transition-colors">
                     <td className="py-3 px-4">
                       <div className="relative h-12 w-10 overflow-hidden rounded bg-slate-900 border border-border">
-                        <Image
-                          src={item.imageUrl}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={resolveAdminImage(item.imageUrl)}
                           alt={item.clientName}
-                          fill
-                          className="object-cover"
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            if (target.src.includes(".webp")) {
+                              target.src = target.src.replace(/\.webp$/i, ".png");
+                            }
+                          }}
+                          className="h-full w-full object-cover"
                         />
                       </div>
                     </td>
